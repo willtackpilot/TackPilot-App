@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "TackPilot-App",
-    "slug": "TackPilot-App",
+    "name": "TackPilot",
+    "slug": "tackpilot",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -9,12 +9,14 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#1B2B4B"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tackpilot.app"
     },
     "android": {
+      "package": "com.tackpilot.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
