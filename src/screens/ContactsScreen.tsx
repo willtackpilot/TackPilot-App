@@ -32,7 +32,7 @@ export default function ContactsScreen() {
       const data = await res.json();
       setContacts(Array.isArray(data) ? data : data.contacts ?? []);
     } catch {
-      // keep current list on error
+      setContacts([]);
     }
   }, []);
 
@@ -61,8 +61,9 @@ export default function ContactsScreen() {
   if (contacts.length === 0) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.emptyTitle}>Contacts</Text>
-        <Text style={styles.emptySubtext}>Your contacts will appear here</Text>
+        <Ionicons name="people-outline" size={56} color={COLORS.gray} style={{ marginBottom: 12 }} />
+        <Text style={styles.emptyTitle}>No contacts yet</Text>
+        <Text style={styles.emptySubtext}>Your contacts will appear here once added.</Text>
       </View>
     );
   }

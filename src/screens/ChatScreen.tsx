@@ -9,7 +9,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
-  Image,
   Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -53,17 +52,29 @@ function TypingIndicator() {
   );
 }
 
-function WelcomeMessage() {
+function WelcomeMessage({ onQuickAction }: { onQuickAction: (text: string) => void }) {
   return (
     <View style={styles.welcomeContainer}>
-      <Image
-        source={require('../../assets/icon.png')}
-        style={styles.welcomeLogo}
-      />
+      <View style={styles.logoContainer}>
+        <Ionicons name="checkmark-circle" size={38} color={COLORS.navy} />
+        <Text style={styles.logoText}>TackPilot</Text>
+      </View>
       <Text style={styles.welcomeTitle}>TackPilot AI</Text>
       <Text style={styles.welcomeSubtitle}>
         Your AI-powered operations manager. Ask me anything about your jobs, schedule, contacts, or finances.
       </Text>
+      <View style={styles.quickActions}>
+        {['Create a job', 'Check schedule', 'Find a sub'].map((label) => (
+          <TouchableOpacity
+            key={label}
+            style={styles.quickActionPill}
+            onPress={() => onQuickAction(label)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.quickActionText}>{label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
     </View>
   );
 }
@@ -159,7 +170,7 @@ export default function ChatScreen() {
           styles.messageList,
           messages.length === 0 && styles.messageListEmpty,
         ]}
-        ListEmptyComponent={<WelcomeMessage />}
+        ListEmptyComponent={<WelcomeMessage onQuickAction={(text) => sendMessage(text)} />}
         ListFooterComponent={sending ? <TypingIndicator /> : null}
         onContentSizeChange={() =>
           flatListRef.current?.scrollToEnd({ animated: true })
@@ -211,14 +222,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 32,
   },
-  welcomeLogo: {
-    width: 80,
-    height: 80,
-    borderRadius: 20,
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 16,
+    gap: 8,
+  },
+  logoText: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: COLORS.navy,
   },
   welcomeTitle: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: '700',
     color: COLORS.navy,
     marginBottom: 8,
@@ -228,6 +244,25 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     color: COLORS.gray,
     textAlign: 'center',
+  },
+  quickActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginTop: 20,
+    gap: 10,
+  },
+  quickActionPill: {
+    borderWidth: 1.5,
+    borderColor: COLORS.userBubble,
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  quickActionText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.userBubble,
   },
   typingContainer: {
     flexDirection: 'row',

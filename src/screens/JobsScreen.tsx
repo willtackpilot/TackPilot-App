@@ -72,8 +72,9 @@ export default function JobsScreen() {
   if (jobs.length === 0) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.emptyTitle}>Jobs</Text>
-        <Text style={styles.emptySubtext}>Your jobs will appear here</Text>
+        <Ionicons name="briefcase-outline" size={56} color={COLORS.gray} style={{ marginBottom: 12 }} />
+        <Text style={styles.emptyTitle}>No jobs yet</Text>
+        <Text style={styles.emptySubtext}>When you create or get assigned a job, it will show up here.</Text>
       </View>
     );
   }
