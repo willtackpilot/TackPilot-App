@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
+  TextInput,
   FlatList,
   StyleSheet,
   ActivityIndicator,
@@ -40,6 +41,7 @@ export default function JobsScreen() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [search, setSearch] = useState('');
 
   const fetchJobs = useCallback(async () => {
     try {
@@ -68,6 +70,15 @@ export default function JobsScreen() {
       </View>
     );
   }
+
+  const query = search.toLowerCase().trim();
+  const filtered = query
+    ? jobs.filter(
+        (j) =>
+          j.title.toLowerCase().includes(query) ||
+          (j.location && j.location.toLowerCase().includes(query)),
+      )
+    : jobs;
 
   if (jobs.length === 0) {
     return (
@@ -106,20 +117,32 @@ export default function JobsScreen() {
   };
 
   return (
-    <FlatList
-      data={jobs}
-      keyExtractor={(item) => item.id}
-      renderItem={renderJob}
-      contentContainerStyle={styles.list}
-      style={styles.container}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          tintColor={COLORS.navy}
+    <View style={styles.container}>
+      <View style={styles.searchBar}>
+        <Ionicons name="search" size={18} color={COLORS.gray} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search jobs..."
+          placeholderTextColor={COLORS.placeholder}
+          value={search}
+          onChangeText={setSearch}
+          autoCorrect={false}
         />
-      }
-    />
+      </View>
+      <FlatList
+        data={filtered}
+        keyExtractor={(item) => item.id}
+        renderItem={renderJob}
+        contentContainerStyle={styles.list}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={COLORS.navy}
+          />
+        }
+      />
+    </View>
   );
 }
 
@@ -143,6 +166,23 @@ const styles = StyleSheet.create({
   emptySubtext: {
     fontSize: 15,
     color: COLORS.gray,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+    marginHorizontal: 12,
+    marginTop: 12,
+    marginBottom: 4,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    height: 42,
+    gap: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    color: COLORS.black,
   },
   list: {
     padding: 12,

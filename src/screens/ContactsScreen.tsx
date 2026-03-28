@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
+  TextInput,
   FlatList,
   StyleSheet,
   ActivityIndicator,
@@ -25,6 +26,7 @@ export default function ContactsScreen() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [search, setSearch] = useState('');
 
   const fetchContacts = useCallback(async () => {
     try {
@@ -57,6 +59,17 @@ export default function ContactsScreen() {
       </View>
     );
   }
+
+  const query = search.toLowerCase().trim();
+  const filtered = query
+    ? contacts.filter(
+        (c) =>
+          c.name.toLowerCase().includes(query) ||
+          (c.trade && c.trade.toLowerCase().includes(query)) ||
+          (c.role && c.role.toLowerCase().includes(query)) ||
+          (c.phone && c.phone.includes(query)),
+      )
+    : contacts;
 
   if (contacts.length === 0) {
     return (
@@ -101,20 +114,32 @@ export default function ContactsScreen() {
   };
 
   return (
-    <FlatList
-      data={contacts}
-      keyExtractor={(item) => item.id}
-      renderItem={renderContact}
-      contentContainerStyle={styles.list}
-      style={styles.container}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          tintColor={COLORS.navy}
+    <View style={styles.container}>
+      <View style={styles.searchBar}>
+        <Ionicons name="search" size={18} color={COLORS.gray} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search contacts..."
+          placeholderTextColor={COLORS.placeholder}
+          value={search}
+          onChangeText={setSearch}
+          autoCorrect={false}
         />
-      }
-    />
+      </View>
+      <FlatList
+        data={filtered}
+        keyExtractor={(item) => item.id}
+        renderItem={renderContact}
+        contentContainerStyle={styles.list}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={COLORS.navy}
+          />
+        }
+      />
+    </View>
   );
 }
 
@@ -138,6 +163,23 @@ const styles = StyleSheet.create({
   emptySubtext: {
     fontSize: 15,
     color: COLORS.gray,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+    marginHorizontal: 12,
+    marginTop: 12,
+    marginBottom: 4,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    height: 42,
+    gap: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    color: COLORS.black,
   },
   list: {
     padding: 12,
