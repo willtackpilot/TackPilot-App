@@ -9,7 +9,9 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, API_BASE_URL } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
 
@@ -44,95 +46,149 @@ export default function LoginScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    <LinearGradient
+      colors={['#1B2B4B', '#2E75B6']}
+      style={styles.gradient}
     >
-      <View style={styles.inner}>
-        <Text style={styles.title}>TackPilot</Text>
-        <Text style={styles.subtitle}>Sign in to continue</Text>
-
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          placeholderTextColor={COLORS.placeholder}
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          textContentType="emailAddress"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          placeholderTextColor={COLORS.placeholder}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          textContentType="password"
-        />
-
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleLogin}
-          disabled={loading}
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
         >
-          {loading ? (
-            <ActivityIndicator color={COLORS.white} />
-          ) : (
-            <Text style={styles.buttonText}>Log In</Text>
-          )}
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+          <View style={styles.brandArea}>
+            <Text style={styles.brandName}>TackPilot</Text>
+            <Text style={styles.brandTagline}>AI-powered job management</Text>
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Sign In</Text>
+
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              placeholderTextColor={COLORS.placeholder}
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              textContentType="emailAddress"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              placeholderTextColor={COLORS.placeholder}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              textContentType="password"
+            />
+
+            <TouchableOpacity
+              style={[styles.button, loading && styles.buttonDisabled]}
+              onPress={handleLogin}
+              disabled={loading}
+              activeOpacity={0.8}
+            >
+              {loading ? (
+                <ActivityIndicator color={COLORS.white} />
+              ) : (
+                <Text style={styles.buttonText}>Sign In</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.forgotButton} activeOpacity={0.6}>
+              <Text style={styles.forgotText}>Forgot password?</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  gradient: {
     flex: 1,
-    backgroundColor: COLORS.white,
   },
-  inner: {
+  flex: {
     flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 32,
   },
-  title: {
-    fontSize: 36,
-    fontWeight: '700',
-    color: COLORS.navy,
-    textAlign: 'center',
+  scroll: {
+    flexGrow: 1,
+    justifyContent: 'flex-end',
+    paddingHorizontal: 24,
+    paddingBottom: 40,
+  },
+  brandArea: {
+    alignItems: 'center',
+    marginBottom: 48,
+  },
+  brandName: {
+    fontSize: 40,
+    fontWeight: '800',
+    color: COLORS.white,
+    letterSpacing: 1,
     marginBottom: 8,
   },
-  subtitle: {
-    fontSize: 16,
-    color: COLORS.gray,
-    textAlign: 'center',
-    marginBottom: 40,
+  brandTagline: {
+    fontSize: 17,
+    color: 'rgba(255,255,255,0.8)',
+  },
+  card: {
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
+    paddingHorizontal: 24,
+    paddingTop: 28,
+    paddingBottom: 24,
+    shadowColor: COLORS.black,
+    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 8 },
+    shadowRadius: 24,
+    elevation: 8,
+  },
+  cardTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: COLORS.navy,
+    marginBottom: 24,
   },
   input: {
-    height: 50,
+    height: 52,
     borderWidth: 1,
-    borderColor: COLORS.inputBorder,
-    borderRadius: 10,
+    borderColor: COLORS.lightGray,
+    borderRadius: 12,
     paddingHorizontal: 16,
     fontSize: 16,
     marginBottom: 16,
     color: COLORS.black,
-    backgroundColor: COLORS.lightGray,
+    backgroundColor: '#FAFBFC',
   },
   button: {
-    height: 50,
-    backgroundColor: COLORS.navy,
-    borderRadius: 10,
+    height: 52,
+    backgroundColor: COLORS.userBubble,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 8,
   },
+  buttonDisabled: {
+    opacity: 0.7,
+  },
   buttonText: {
     color: COLORS.white,
     fontSize: 17,
-    fontWeight: '600',
+    fontWeight: '700',
+  },
+  forgotButton: {
+    alignItems: 'center',
+    marginTop: 18,
+  },
+  forgotText: {
+    fontSize: 14,
+    color: COLORS.userBubble,
+    fontWeight: '500',
   },
 });
