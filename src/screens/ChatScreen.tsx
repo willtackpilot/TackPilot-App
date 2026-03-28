@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Image,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -20,6 +22,50 @@ interface Message {
   text: string;
   sender: 'user' | 'ai';
   imageUri?: string;
+}
+
+function TypingIndicator() {
+  const dots = [useRef(new Animated.Value(0)).current, useRef(new Animated.Value(0)).current, useRef(new Animated.Value(0)).current];
+
+  useEffect(() => {
+    const animations = dots.map((dot, i) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.delay(i * 150),
+          Animated.timing(dot, { toValue: -8, duration: 300, useNativeDriver: true }),
+          Animated.timing(dot, { toValue: 0, duration: 300, useNativeDriver: true }),
+        ])
+      )
+    );
+    animations.forEach((a) => a.start());
+    return () => animations.forEach((a) => a.stop());
+  }, []);
+
+  return (
+    <View style={styles.typingContainer}>
+      {dots.map((dot, i) => (
+        <Animated.View
+          key={i}
+          style={[styles.typingDot, { transform: [{ translateY: dot }] }]}
+        />
+      ))}
+    </View>
+  );
+}
+
+function WelcomeMessage() {
+  return (
+    <View style={styles.welcomeContainer}>
+      <Image
+        source={require('../../assets/icon.png')}
+        style={styles.welcomeLogo}
+      />
+      <Text style={styles.welcomeTitle}>TackPilot AI</Text>
+      <Text style={styles.welcomeSubtitle}>
+        Your AI-powered operations manager. Ask me anything about your jobs, schedule, contacts, or finances.
+      </Text>
+    </View>
+  );
 }
 
 export default function ChatScreen() {
@@ -109,7 +155,12 @@ export default function ChatScreen() {
         data={messages}
         keyExtractor={(item) => item.id}
         renderItem={renderMessage}
-        contentContainerStyle={styles.messageList}
+        contentContainerStyle={[
+          styles.messageList,
+          messages.length === 0 && styles.messageListEmpty,
+        ]}
+        ListEmptyComponent={<WelcomeMessage />}
+        ListFooterComponent={sending ? <TypingIndicator /> : null}
         onContentSizeChange={() =>
           flatListRef.current?.scrollToEnd({ animated: true })
         }
@@ -146,11 +197,54 @@ export default function ChatScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.lightGray,
   },
   messageList: {
     paddingHorizontal: 12,
     paddingVertical: 16,
+  },
+  messageListEmpty: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  welcomeContainer: {
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  welcomeLogo: {
+    width: 80,
+    height: 80,
+    borderRadius: 20,
+    marginBottom: 16,
+  },
+  welcomeTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: COLORS.navy,
+    marginBottom: 8,
+  },
+  welcomeSubtitle: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: COLORS.gray,
+    textAlign: 'center',
+  },
+  typingContainer: {
+    flexDirection: 'row',
+    alignSelf: 'flex-start',
+    backgroundColor: COLORS.aiBubble,
+    borderRadius: 18,
+    borderBottomLeftRadius: 4,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginBottom: 8,
+    gap: 5,
+  },
+  typingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: COLORS.userBubble,
   },
   bubble: {
     maxWidth: '78%',
