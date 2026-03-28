@@ -1,8 +1,9 @@
 import React from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, View, Text, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/AuthContext';
 import { COLORS } from '../constants/theme';
 import LoginScreen from '../screens/LoginScreen';
@@ -17,6 +18,29 @@ const tabIcons: Record<string, { focused: keyof typeof Ionicons.glyphMap; defaul
   Jobs: { focused: 'briefcase', default: 'briefcase-outline' },
   Contacts: { focused: 'people', default: 'people-outline' },
 };
+
+function HeaderTitle() {
+  return (
+    <View style={styles.headerTitleRow}>
+      <Ionicons name="checkmark-circle" size={22} color={COLORS.white} style={styles.headerIcon} />
+      <Text style={styles.headerTitleText}>TackPilot</Text>
+    </View>
+  );
+}
+
+function HeaderBackground() {
+  return (
+    <View style={styles.headerBg}>
+      <View style={styles.headerBgSolid} />
+      <LinearGradient
+        colors={[COLORS.navy, COLORS.userBubble]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.headerGradientLine}
+      />
+    </View>
+  );
+}
 
 export default function AppNavigator() {
   const { token, isLoading } = useAuth();
@@ -41,9 +65,11 @@ export default function AppNavigator() {
     <NavigationContainer>
       <Tab.Navigator
         screenOptions={({ route }) => ({
-          headerStyle: { backgroundColor: COLORS.navy },
+          headerTitle: () => <HeaderTitle />,
+          headerBackground: () => <HeaderBackground />,
+          headerTitleAlign: 'center',
+          headerStyle: { height: 100 },
           headerTintColor: COLORS.white,
-          headerTitleStyle: { fontWeight: '600' },
           tabBarActiveTintColor: COLORS.white,
           tabBarInactiveTintColor: 'rgba(255,255,255,0.5)',
           tabBarStyle: { backgroundColor: COLORS.navy, borderTopWidth: 0 },
@@ -61,3 +87,29 @@ export default function AppNavigator() {
     </NavigationContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerIcon: {
+    marginRight: 6,
+  },
+  headerTitleText: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: COLORS.white,
+    letterSpacing: 0.5,
+  },
+  headerBg: {
+    flex: 1,
+  },
+  headerBgSolid: {
+    flex: 1,
+    backgroundColor: COLORS.navy,
+  },
+  headerGradientLine: {
+    height: 3,
+  },
+});
