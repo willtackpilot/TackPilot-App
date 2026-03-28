@@ -26,16 +26,16 @@ export default function LoginScreen() {
     }
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/login`, {
+      const res = await fetch(`${API_BASE_URL}/v1/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, is_remember: true }),
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.message || 'Login failed');
+        throw new Error(data.detail || 'Login failed');
       }
-      await signIn(data.token);
+      await signIn(data.access_token);
     } catch (err: any) {
       Alert.alert('Login Failed', err.message || 'Something went wrong');
     } finally {
