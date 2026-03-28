@@ -1,15 +1,17 @@
 import React from 'react';
-import { ActivityIndicator, View, Text, StyleSheet } from 'react-native';
+import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/AuthContext';
 import { COLORS } from '../constants/theme';
+import Logo from '../../assets/logo.svg';
 import LoginScreen from '../screens/LoginScreen';
 import ChatScreen from '../screens/ChatScreen';
 import JobsScreen from '../screens/JobsScreen';
 import ContactsScreen from '../screens/ContactsScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -17,13 +19,13 @@ const tabIcons: Record<string, { focused: keyof typeof Ionicons.glyphMap; defaul
   Chat: { focused: 'chatbubbles', default: 'chatbubbles-outline' },
   Jobs: { focused: 'briefcase', default: 'briefcase-outline' },
   Contacts: { focused: 'people', default: 'people-outline' },
+  Profile: { focused: 'person-circle', default: 'person-circle-outline' },
 };
 
 function HeaderTitle() {
   return (
     <View style={styles.headerTitleRow}>
-      <Ionicons name="checkmark-circle" size={22} color={COLORS.white} style={styles.headerIcon} />
-      <Text style={styles.headerTitleText}>TackPilot</Text>
+      <Logo width={120} height={28} />
     </View>
   );
 }
@@ -83,6 +85,7 @@ export default function AppNavigator() {
         <Tab.Screen name="Chat" component={ChatScreen} />
         <Tab.Screen name="Jobs" component={JobsScreen} />
         <Tab.Screen name="Contacts" component={ContactsScreen} />
+        <Tab.Screen name="Profile" component={ProfileScreen} />
       </Tab.Navigator>
     </NavigationContainer>
   );
@@ -92,15 +95,6 @@ const styles = StyleSheet.create({
   headerTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  headerIcon: {
-    marginRight: 6,
-  },
-  headerTitleText: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: COLORS.white,
-    letterSpacing: 0.5,
   },
   headerBg: {
     flex: 1,

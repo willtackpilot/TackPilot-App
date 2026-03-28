@@ -14,6 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { COLORS } from '../constants/theme';
+import Logo from '../../assets/logo.svg';
 import { apiRequest } from '../api/client';
 
 interface Message {
@@ -56,8 +57,7 @@ function WelcomeMessage({ onQuickAction }: { onQuickAction: (text: string) => vo
   return (
     <View style={styles.welcomeContainer}>
       <View style={styles.logoContainer}>
-        <Ionicons name="checkmark-circle" size={38} color={COLORS.navy} />
-        <Text style={styles.logoText}>TackPilot</Text>
+        <Logo width={200} height={48} />
       </View>
       <Text style={styles.welcomeTitle}>TackPilot AI</Text>
       <Text style={styles.welcomeSubtitle}>
@@ -223,15 +223,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   logoContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
-    gap: 8,
-  },
-  logoText: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: COLORS.navy,
   },
   welcomeTitle: {
     fontSize: 28,
