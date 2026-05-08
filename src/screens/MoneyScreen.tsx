@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
-import { C } from '../constants/theme';
+import { C, money } from '../constants/theme';
 import SectionHeader from '../components/SectionHeader';
 import EmptyState from '../components/EmptyState';
+import { useFinances } from '../hooks/useFinances';
+import type { InvoiceItem } from '../api/types';
 
 type InvoiceTab = 'all' | 'overdue' | 'open';
 
@@ -12,8 +14,51 @@ const TABS: Array<{ id: InvoiceTab; label: string }> = [
   { id: 'open', label: 'Open' },
 ];
 
+function daysUntilDue(due: string): number {
+  const d = new Date(due);
+  if (Number.isNaN(d.getTime())) return Number.NaN;
+  const ms = d.getTime() - Date.now();
+  return Math.round(ms / (1000 * 60 * 60 * 24));
+}
+
+function isOverdue(iv: InvoiceItem): boolean {
+  const d = daysUntilDue(iv.due_date);
+  if (Number.isNaN(d)) return iv.status?.toLowerCase() === 'overdue';
+  return d < 0;
+}
+
+function dueLabel(iv: InvoiceItem): string {
+  const d = daysUntilDue(iv.due_date);
+  if (Number.isNaN(d)) return iv.due_date;
+  if (d < 0) return `${Math.abs(d)}d late`;
+  if (d === 0) return 'due today';
+  return `due in ${d}d`;
+}
+
 export default function MoneyScreen() {
   const [tab, setTab] = useState<InvoiceTab>('all');
+  const { data } = useFinances();
+
+  const invoices = data?.open_invoices?.invoices ?? [];
+  const quickbooksConnected = data?.open_invoices?.quickbooks_connected ?? false;
+  const emptyMessage =
+    data?.open_invoices?.empty_state_message ??
+    'Connect QuickBooks to see your invoices.';
+
+  const overdue = useMemo(() => invoices.filter(isOverdue), [invoices]);
+  const open = useMemo(() => invoices.filter((i) => !isOverdue(i)), [invoices]);
+
+  const visible = tab === 'all' ? invoices : tab === 'overdue' ? overdue : open;
+
+  const tabCounts: Record<InvoiceTab, number> = {
+    all: invoices.length,
+    overdue: overdue.length,
+    open: open.length,
+  };
+
+  const health = data?.health_summary;
+  const collected = health?.revenue_this_month ?? null;
+  const showHero = collected !== null && collected > 0;
 
   return (
     <ScrollView
@@ -29,9 +74,13 @@ export default function MoneyScreen() {
       <View style={styles.heroSection}>
         <Text style={styles.heroLabel}>You collected this month</Text>
         <View style={styles.heroRow}>
-          <Text style={styles.heroAmount}>—</Text>
+          <Text style={styles.heroAmount}>
+            {showHero ? money(collected) : '—'}
+          </Text>
         </View>
-        <Text style={styles.subMeta}>No revenue data yet.</Text>
+        {!showHero ? (
+          <Text style={styles.subMeta}>No revenue yet this month.</Text>
+        ) : null}
       </View>
 
       <View style={styles.section}>
@@ -56,16 +105,64 @@ export default function MoneyScreen() {
                   style={[styles.tabBtn, active && styles.tabBtnActive]}
                 >
                   <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>
-                    {t.label}
+                    {t.label}{' '}
+                    <Text style={styles.tabCount}>{tabCounts[t.id]}</Text>
                   </Text>
                 </TouchableOpacity>
               );
             })}
           </View>
         </View>
-        <EmptyState message="No invoices yet." />
+
+        {invoices.length === 0 ? (
+          <EmptyState
+            message={quickbooksConnected ? 'No open invoices.' : emptyMessage}
+          />
+        ) : (
+          <View>
+            {visible.map((iv, idx) => (
+              <InvoiceRow
+                key={iv.id}
+                invoice={iv}
+                isLast={idx === visible.length - 1}
+              />
+            ))}
+          </View>
+        )}
       </View>
     </ScrollView>
+  );
+}
+
+function InvoiceRow({ invoice, isLast }: { invoice: InvoiceItem; isLast: boolean }) {
+  const overdueRow = isOverdue(invoice);
+  return (
+    <View style={[styles.invoiceRow, !isLast && styles.invoiceRowBorder]}>
+      <View style={styles.invoiceMain}>
+        <Text style={styles.invoiceClient} numberOfLines={1}>
+          {invoice.client}
+        </Text>
+        {invoice.description ? (
+          <Text style={styles.invoiceDesc} numberOfLines={1}>
+            {invoice.description}
+          </Text>
+        ) : null}
+      </View>
+      <View style={styles.invoiceMeta}>
+        <Text
+          style={[
+            styles.invoiceDue,
+            overdueRow && styles.invoiceDueOverdue,
+          ]}
+          numberOfLines={1}
+        >
+          {dueLabel(invoice)}
+        </Text>
+        <Text style={styles.invoiceAmount} numberOfLines={1}>
+          {money(invoice.amount)}
+        </Text>
+      </View>
+    </View>
   );
 }
 
@@ -139,7 +236,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   tabBtn: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 4,
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
@@ -153,6 +250,52 @@ const styles = StyleSheet.create({
     color: C.muted,
   },
   tabLabelActive: {
+    color: C.ink,
+  },
+  tabCount: {
+    color: C.faded,
+    fontWeight: '600',
+  },
+  invoiceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 12,
+  },
+  invoiceRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: C.sep,
+  },
+  invoiceMain: {
+    flex: 1,
+    minWidth: 0,
+  },
+  invoiceClient: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: C.ink,
+  },
+  invoiceDesc: {
+    fontSize: 12,
+    color: C.muted,
+    marginTop: 2,
+  },
+  invoiceMeta: {
+    alignItems: 'flex-end',
+  },
+  invoiceDue: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: C.muted,
+    marginBottom: 2,
+  },
+  invoiceDueOverdue: {
+    color: C.amber,
+    fontWeight: '700',
+  },
+  invoiceAmount: {
+    fontSize: 14,
+    fontWeight: '800',
     color: C.ink,
   },
 });

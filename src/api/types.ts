@@ -80,6 +80,57 @@ export interface TodaysSchedule {
   total_count: number;
 }
 
+/* ---------- Finances / Invoices ----------
+ * GET /v1/invoices does NOT exist. Open invoices are read via
+ * GET /v1/finances → FinancesPageResponse.open_invoices.invoices.
+ * useFinances() exposes the bundled response; callers pull what they need.
+ */
+
+export interface InvoiceItem {
+  id: string;
+  number: string | null;
+  client: string;
+  amount: number;
+  due_date: string;
+  status: string;
+  quickbooks_invoice_id: string | null;
+  stripe_invoice_id: string | null;
+  sync_status: 'synced' | 'pending' | 'failed';
+  description: string | null;
+}
+
+export interface OpenInvoices {
+  quickbooks_connected: boolean;
+  invoices: InvoiceItem[];
+  empty_state_message: string;
+}
+
+export interface CashFlowOverview {
+  bank_connected: boolean;
+  accounts: Record<string, unknown>[];
+  total_balance: number | null;
+}
+
+export type RevenueTrend = 'up' | 'down' | 'flat';
+
+export interface HealthSummary {
+  revenue_this_month: number;
+  revenue_trend: RevenueTrend;
+  overdue_count: number;
+  overdue_total: number;
+  best_payer_name: string | null;
+  recent_payment: Record<string, unknown> | null;
+}
+
+export interface FinancesPageResponse {
+  revenue_overview?: Record<string, unknown>;
+  cash_flow?: CashFlowOverview;
+  open_invoices?: OpenInvoices;
+  recent_transactions?: Record<string, unknown>;
+  financing?: Record<string, unknown>;
+  health_summary?: HealthSummary;
+}
+
 export interface DashboardResponse {
   active_projects: number;
   due_today: number;
