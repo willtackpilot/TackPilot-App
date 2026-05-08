@@ -80,6 +80,27 @@ export interface TodaysSchedule {
   total_count: number;
 }
 
+/* ---------- Subcontractor SMS ---------- */
+
+/**
+ * GET /v1/subcontractor/{contact_id}/sms — paginated message list for one
+ * crew member. The response carries no inbound/outbound direction field;
+ * renderers default to inbound.
+ */
+export interface SubcontractorSMSResponse {
+  id: string;
+  title: string;
+  description: string;
+  status: string | null;
+  create_time: string;
+  is_read: boolean;
+}
+
+export interface SubcontractorSMSListResponse {
+  items: SubcontractorSMSResponse[];
+  total_count: number;
+}
+
 /* ---------- Finances / Invoices ----------
  * GET /v1/invoices does NOT exist. Open invoices are read via
  * GET /v1/finances → FinancesPageResponse.open_invoices.invoices.

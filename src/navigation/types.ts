@@ -16,6 +16,7 @@ export type MoneyStackParamList = {
 
 export type ThreadsStackParamList = {
   Threads: undefined;
+  ThreadDetail: { subId: string; name: string };
 };
 
 export type PeopleStackParamList = {

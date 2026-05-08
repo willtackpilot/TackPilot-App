@@ -6,10 +6,13 @@ import { C, money } from '../constants/theme';
 import SectionHeader from '../components/SectionHeader';
 import EmptyState from '../components/EmptyState';
 import { useDashboard } from '../hooks/useDashboard';
+import { useThreadList } from '../hooks/useThreadList';
+import { initialsOf, relTime } from '../utils/time';
 import type {
   DashboardResponse,
   NeedsAttentionItem,
   ScheduleTaskItem,
+  Subcontractor,
   UpcomingTaskItem,
 } from '../api/types';
 import type { TabsParamList } from '../navigation/types';
@@ -88,6 +91,7 @@ export default function TodayScreen() {
   const nav = useNavigation<NavigationProp<TabsParamList>>();
   const tabs = nav.getParent<NavigationProp<TabsParamList>>();
   const { data } = useDashboard();
+  const { threads } = useThreadList();
   const [needsResolved, setNeedsResolved] = useState(false);
 
   const { greeting, dateStr } = useMemo(() => {
@@ -220,9 +224,36 @@ export default function TodayScreen() {
           meta="See all"
           onSeeAll={() => tabs?.navigate('ThreadsTab')}
         />
-        <EmptyState message="No active threads. TackPilot has nothing to handle yet." />
+        {threads.length === 0 ? (
+          <EmptyState message="No active threads. TackPilot has nothing to handle yet." />
+        ) : (
+          threads.slice(0, 4).map((t) => <ThreadMiniRow key={t.id} sub={t} />)
+        )}
       </View>
     </ScrollView>
+  );
+}
+
+function ThreadMiniRow({ sub }: { sub: Subcontractor }) {
+  const time = relTime(sub.last_message_date);
+  const role = [sub.role, sub.trade].filter(Boolean).join(' · ') || 'Crew';
+  return (
+    <View style={styles.threadMiniRow}>
+      <View style={styles.threadMiniAvatar}>
+        <Text style={styles.threadMiniAvatarText}>{initialsOf(sub.full_name)}</Text>
+      </View>
+      <View style={styles.threadMiniText}>
+        <View style={styles.threadMiniTitleLine}>
+          <Text style={styles.threadMiniName} numberOfLines={1}>
+            {sub.full_name}
+          </Text>
+          {time ? <Text style={styles.threadMiniTime}>{time}</Text> : null}
+        </View>
+        <Text style={styles.threadMiniRole} numberOfLines={1}>
+          {role}
+        </Text>
+      </View>
+    </View>
   );
 }
 
@@ -430,5 +461,49 @@ const styles = StyleSheet.create({
     color: C.muted,
     fontSize: 13,
     fontWeight: '700',
+  },
+  threadMiniRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 8,
+  },
+  threadMiniAvatar: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: C.inset,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  threadMiniAvatarText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: C.ink2,
+  },
+  threadMiniText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  threadMiniTitleLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  threadMiniName: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '700',
+    color: C.ink,
+  },
+  threadMiniTime: {
+    fontSize: 11,
+    color: C.faded,
+  },
+  threadMiniRole: {
+    fontSize: 11,
+    color: C.faded,
+    marginTop: 1,
   },
 });

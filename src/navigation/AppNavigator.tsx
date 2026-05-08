@@ -16,6 +16,7 @@ import SettingsScreen from '../screens/SettingsScreen';
 import SettingsDetailScreen from '../screens/SettingsDetailScreen';
 import CalendarScreen from '../screens/CalendarScreen';
 import ThreadsScreen from '../screens/ThreadsScreen';
+import ThreadDetailScreen, { ThreadDetailHeader } from '../screens/ThreadDetailScreen';
 import type {
   RootStackParamList,
   TabsParamList,
@@ -98,6 +99,11 @@ function ThreadsStackNav() {
   return (
     <ThreadsStack.Navigator screenOptions={stackScreenOptions}>
       <ThreadsStack.Screen name="Threads" component={ThreadsScreen} />
+      <ThreadsStack.Screen
+        name="ThreadDetail"
+        component={ThreadDetailScreen}
+        options={{ header: () => <ThreadDetailHeader /> }}
+      />
     </ThreadsStack.Navigator>
   );
 }
