@@ -36,7 +36,11 @@ export default function SettingsScreen() {
         {ITEMS.map((item, idx) => (
           <TouchableOpacity
             key={item.id}
-            onPress={() => nav.navigate('SettingsDetail', { id: item.id, label: item.label })}
+            onPress={() =>
+              item.id === 'connectors'
+                ? nav.navigate('Connectors')
+                : nav.navigate('SettingsDetail', { id: item.id, label: item.label })
+            }
             activeOpacity={0.6}
             style={[styles.row, idx === ITEMS.length - 1 && styles.rowLast]}
           >
