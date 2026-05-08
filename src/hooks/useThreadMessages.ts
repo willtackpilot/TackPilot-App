@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { apiGet } from '../api/client';
+import { apiGet, apiPost } from '../api/client';
 import type {
   SubcontractorSMSListResponse,
   SubcontractorSMSResponse,
@@ -20,6 +20,8 @@ export function useThreadMessages(
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
 
   const refetch = useCallback(async () => {
     if (!contactId) {
@@ -48,9 +50,57 @@ export function useThreadMessages(
     }
   }, [contactId, skip, limit]);
 
+  const sendMessage = useCallback(
+    async (text: string): Promise<boolean> => {
+      const trimmed = text.trim();
+      if (!contactId || !trimmed) return false;
+
+      const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const optimistic: SubcontractorSMSResponse = {
+        id: tempId,
+        title: trimmed.slice(0, 50),
+        description: trimmed,
+        status: null,
+        create_time: new Date().toISOString(),
+        is_read: true,
+      };
+
+      setSendError(null);
+      setSending(true);
+      setMessages((prev) => [...prev, optimistic]);
+
+      try {
+        await apiPost(`/v1/subcontractor/${contactId}/sms`, {
+          description: trimmed,
+        });
+        await refetch();
+        return true;
+      } catch (e) {
+        setMessages((prev) => prev.filter((m) => m.id !== tempId));
+        setSendError(e instanceof Error ? e.message : 'Failed to send');
+        return false;
+      } finally {
+        setSending(false);
+      }
+    },
+    [contactId, refetch],
+  );
+
+  const clearSendError = useCallback(() => setSendError(null), []);
+
   useEffect(() => {
     refetch();
   }, [refetch]);
 
-  return { messages, totalCount, loading, error, refetch };
+  return {
+    messages,
+    totalCount,
+    loading,
+    error,
+    refetch,
+    sendMessage,
+    sending,
+    sendError,
+    clearSendError,
+  };
 }

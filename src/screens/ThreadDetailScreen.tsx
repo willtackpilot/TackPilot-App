@@ -1,16 +1,20 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
+  TextInput,
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
   StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useHeaderHeight } from '@react-navigation/elements';
 import { C } from '../constants/theme';
 import EmptyState from '../components/EmptyState';
 import { useThreadMessages } from '../hooks/useThreadMessages';
@@ -24,14 +28,53 @@ type DetailNav = NativeStackNavigationProp<ThreadsStackParamList, 'ThreadDetail'
 export default function ThreadDetailScreen() {
   const route = useRoute<DetailRoute>();
   const { subId, name } = route.params;
-  const { messages, loading } = useThreadMessages(subId);
+  const headerHeight = useHeaderHeight();
+  const {
+    messages,
+    loading,
+    sendMessage,
+    sending,
+    sendError,
+    clearSendError,
+  } = useThreadMessages(subId);
+
+  const [draft, setDraft] = useState('');
+  const scrollRef = useRef<ScrollView>(null);
+
+  const trimmed = draft.trim();
+  const canSend = !!trimmed && !sending;
+
+  const handleSend = async () => {
+    if (!canSend) return;
+    const text = trimmed;
+    setDraft('');
+    const ok = await sendMessage(text);
+    if (!ok) {
+      setDraft(text);
+      return;
+    }
+    requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
+  };
+
+  const onChangeText = (next: string) => {
+    if (sendError) clearSendError();
+    setDraft(next);
+  };
 
   return (
-    <View style={styles.root}>
+    <KeyboardAvoidingView
+      style={styles.root}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={headerHeight}
+    >
       <ScrollView
+        ref={scrollRef}
         style={styles.scroll}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        onContentSizeChange={() =>
+          scrollRef.current?.scrollToEnd({ animated: false })
+        }
       >
         {loading && messages.length === 0 ? (
           <View style={styles.loadingBox}>
@@ -45,7 +88,57 @@ export default function ThreadDetailScreen() {
           messages.map((m) => <Bubble key={m.id} message={m} who={name} />)
         )}
       </ScrollView>
-    </View>
+
+      {sendError ? (
+        <View style={styles.errorBar}>
+          <Text style={styles.errorText} numberOfLines={2}>
+            {sendError}
+          </Text>
+          <TouchableOpacity
+            onPress={clearSendError}
+            activeOpacity={0.6}
+            style={styles.errorDismiss}
+            accessibilityLabel="Dismiss error"
+          >
+            <Ionicons name="close" size={16} color={C.red} />
+          </TouchableOpacity>
+        </View>
+      ) : null}
+
+      <View style={styles.composer}>
+        <View style={styles.inputWrap}>
+          <TextInput
+            style={styles.input}
+            placeholder={`Reply to ${name.split(' ')[0]}…`}
+            placeholderTextColor={C.faded}
+            value={draft}
+            onChangeText={onChangeText}
+            multiline
+            maxLength={1600}
+            editable={!sending}
+            onSubmitEditing={handleSend}
+            blurOnSubmit={false}
+          />
+          <TouchableOpacity
+            onPress={handleSend}
+            disabled={!canSend}
+            activeOpacity={0.8}
+            style={[styles.sendBtn, !canSend && styles.sendBtnDisabled]}
+            accessibilityLabel="Send message"
+          >
+            {sending ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Ionicons
+                name="arrow-up"
+                size={16}
+                color={canSend ? '#FFFFFF' : C.faded}
+              />
+            )}
+          </TouchableOpacity>
+        </View>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -56,14 +149,17 @@ function Bubble({
   message: SubcontractorSMSResponse;
   who: string;
 }) {
+  const isPending = message.id.startsWith('temp-');
   return (
     <View style={styles.bubbleRow}>
       <View style={styles.bubbleColumn}>
         <View style={styles.bubbleMeta}>
           <Text style={styles.bubbleWho}>{who}</Text>
-          <Text style={styles.bubbleTime}>{relTime(message.create_time)}</Text>
+          <Text style={styles.bubbleTime}>
+            {isPending ? 'sending…' : relTime(message.create_time)}
+          </Text>
         </View>
-        <View style={styles.bubble}>
+        <View style={[styles.bubble, isPending && styles.bubblePending]}>
           <Text style={styles.bubbleText}>{message.description}</Text>
         </View>
       </View>
@@ -153,10 +249,75 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderTopLeftRadius: 4,
   },
+  bubblePending: {
+    opacity: 0.55,
+  },
   bubbleText: {
     fontSize: 14,
     color: C.ink2,
     lineHeight: 20,
+  },
+  errorBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: '#FBE9E7',
+    borderTopWidth: 1,
+    borderTopColor: C.red,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  errorText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+    color: C.red,
+  },
+  errorDismiss: {
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  composer: {
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: Platform.OS === 'ios' ? 8 : 10,
+    backgroundColor: C.bg,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: C.sep,
+  },
+  inputWrap: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 8,
+    backgroundColor: C.canvas,
+    borderColor: C.sep,
+    borderWidth: 1,
+    borderRadius: 22,
+    paddingLeft: 14,
+    paddingRight: 4,
+    paddingVertical: 4,
+    minHeight: 40,
+  },
+  input: {
+    flex: 1,
+    fontSize: 15,
+    color: C.ink,
+    paddingVertical: 6,
+    paddingRight: 4,
+    maxHeight: 120,
+  },
+  sendBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: C.iMsgBlue,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sendBtnDisabled: {
+    backgroundColor: C.inset,
   },
   header: {
     height: 56,
