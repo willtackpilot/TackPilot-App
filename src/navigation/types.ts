@@ -25,6 +25,7 @@ export type PeopleStackParamList = {
 
 export type SettingsStackParamList = {
   Settings: undefined;
+  Connectors: undefined;
   SettingsDetail: { id: string; label: string };
 };
 

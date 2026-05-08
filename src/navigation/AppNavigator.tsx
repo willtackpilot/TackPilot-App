@@ -14,6 +14,7 @@ import PeopleScreen from '../screens/PeopleScreen';
 import MoneyScreen from '../screens/MoneyScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import SettingsDetailScreen from '../screens/SettingsDetailScreen';
+import ConnectorsScreen from '../screens/ConnectorsScreen';
 import CalendarScreen from '../screens/CalendarScreen';
 import ThreadsScreen from '../screens/ThreadsScreen';
 import ThreadDetailScreen, { ThreadDetailHeader } from '../screens/ThreadDetailScreen';
@@ -120,6 +121,7 @@ function SettingsStackNav() {
   return (
     <SettingsStack.Navigator screenOptions={stackScreenOptions}>
       <SettingsStack.Screen name="Settings" component={SettingsScreen} />
+      <SettingsStack.Screen name="Connectors" component={ConnectorsScreen} />
       <SettingsStack.Screen name="SettingsDetail" component={SettingsDetailScreen} />
     </SettingsStack.Navigator>
   );
