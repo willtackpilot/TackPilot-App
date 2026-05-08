@@ -2,21 +2,30 @@ import React, { useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NavigationProp } from '@react-navigation/native';
-import { C } from '../constants/theme';
+import { C, money } from '../constants/theme';
 import SectionHeader from '../components/SectionHeader';
 import EmptyState from '../components/EmptyState';
+import { useDashboard } from '../hooks/useDashboard';
+import type { DashboardResponse } from '../api/types';
 import type { TabsParamList } from '../navigation/types';
 
-const STATS: Array<{ label: string }> = [
-  { label: 'Pending' },
-  { label: 'Due today' },
-  { label: 'Completed' },
-  { label: 'Activity' },
+const STAT_KEYS: Array<{
+  label: string;
+  field: keyof Pick<
+    DashboardResponse,
+    'pending_tasks' | 'due_today' | 'completed_tasks' | 'activity_feed_total'
+  >;
+}> = [
+  { label: 'Pending', field: 'pending_tasks' },
+  { label: 'Due today', field: 'due_today' },
+  { label: 'Completed', field: 'completed_tasks' },
+  { label: 'Activity', field: 'activity_feed_total' },
 ];
 
 export default function TodayScreen() {
   const nav = useNavigation<NavigationProp<TabsParamList>>();
   const tabs = nav.getParent<NavigationProp<TabsParamList>>();
+  const { data } = useDashboard();
 
   const { greeting, dateStr } = useMemo(() => {
     const now = new Date();
@@ -52,12 +61,15 @@ export default function TodayScreen() {
       </View>
 
       <View style={styles.statGrid}>
-        {STATS.map((s) => (
-          <View key={s.label} style={styles.statTile}>
-            <Text style={styles.statLabel}>{s.label.toUpperCase()}</Text>
-            <Text style={styles.statValue}>—</Text>
-          </View>
-        ))}
+        {STAT_KEYS.map((s) => {
+          const value = data ? data[s.field] : null;
+          return (
+            <View key={s.label} style={styles.statTile}>
+              <Text style={styles.statLabel}>{s.label.toUpperCase()}</Text>
+              <Text style={styles.statValue}>{value ?? '—'}</Text>
+            </View>
+          );
+        })}
       </View>
 
       <View style={styles.section}>
@@ -71,12 +83,15 @@ export default function TodayScreen() {
       </View>
 
       <View style={styles.section}>
-        <SectionHeader title="This week" />
+        <SectionHeader title="This month" />
         <View style={styles.cashflowHero}>
-          <Text style={styles.cashflowAmount}>—</Text>
-          <Text style={styles.cashflowLabel}>this week</Text>
+          <Text style={styles.cashflowAmount}>
+            {data && data.collected_this_month > 0
+              ? money(data.collected_this_month)
+              : '—'}
+          </Text>
+          <Text style={styles.cashflowLabel}>this month</Text>
         </View>
-        <EmptyState message="No revenue data yet." />
       </View>
 
       <View style={styles.section}>

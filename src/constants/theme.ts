@@ -40,3 +40,7 @@ export const COLORS = {
 
 export const API_BASE_URL =
   'https://xsbgmr68m7.execute-api.us-east-1.amazonaws.com/Prod/api';
+
+export function money(n: number | null | undefined): string {
+  return n == null ? '—' : '$' + n.toLocaleString();
+}
