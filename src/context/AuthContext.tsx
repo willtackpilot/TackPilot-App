@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { setAuthFailureHandler } from '../api/client';
 
 interface AuthContextType {
   token: string | null;
   isLoading: boolean;
-  signIn: (token: string) => Promise<void>;
+  signIn: (token: string, refreshToken?: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -26,13 +27,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const signIn = async (jwt: string) => {
+  useEffect(() => {
+    setAuthFailureHandler(() => {
+      setToken(null);
+    });
+    return () => setAuthFailureHandler(null);
+  }, []);
+
+  const signIn = async (jwt: string, refreshToken?: string) => {
     await AsyncStorage.setItem('jwt', jwt);
+    if (refreshToken) {
+      await AsyncStorage.setItem('refreshToken', refreshToken);
+    }
     setToken(jwt);
   };
 
   const signOut = async () => {
-    await AsyncStorage.removeItem('jwt');
+    await AsyncStorage.multiRemove(['jwt', 'refreshToken']);
     setToken(null);
   };
 
