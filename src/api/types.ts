@@ -80,6 +80,32 @@ export interface TodaysSchedule {
   total_count: number;
 }
 
+/* ---------- Calendar ---------- */
+
+export interface LinkedJob {
+  id: string;
+  title: string;
+}
+
+export type AuthoredBy = 'user' | 'ai';
+
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  /** ISO datetime, nullable on tasks without a planned time. */
+  start: string | null;
+  end: string | null;
+  type: string;
+  source: string;
+  color: string | null;
+  link: string | null;
+  authored: AuthoredBy;
+  location: string | null;
+  linked_job: LinkedJob | null;
+  sub_name: string | null;
+  overdue: boolean;
+}
+
 /* ---------- Subcontractor SMS ---------- */
 
 /**
