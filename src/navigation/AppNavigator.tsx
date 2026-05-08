@@ -1,46 +1,101 @@
 import React from 'react';
-import { ActivityIndicator, View, StyleSheet } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/AuthContext';
-import { COLORS } from '../constants/theme';
-import Logo from '../../assets/logo.svg';
+import { C } from '../constants/theme';
+import TopBar from '../components/TopBar';
 import LoginScreen from '../screens/LoginScreen';
-import ChatScreen from '../screens/ChatScreen';
+import TodayScreen from '../screens/TodayScreen';
 import JobsScreen from '../screens/JobsScreen';
-import ContactsScreen from '../screens/ContactsScreen';
-import ProfileScreen from '../screens/ProfileScreen';
+import PeopleScreen from '../screens/PeopleScreen';
+import MoneyScreen from '../screens/MoneyScreen';
+import SettingsScreen from '../screens/SettingsScreen';
+import SettingsDetailScreen from '../screens/SettingsDetailScreen';
+import CalendarScreen from '../screens/CalendarScreen';
+import ThreadsScreen from '../screens/ThreadsScreen';
+import type {
+  RootTabParamList,
+  TodayStackParamList,
+  JobsStackParamList,
+  PeopleStackParamList,
+  MoneyStackParamList,
+  SettingsStackParamList,
+} from './types';
 
-const Tab = createBottomTabNavigator();
+type IconName = keyof typeof Ionicons.glyphMap;
+type TabKey = keyof RootTabParamList;
 
-const tabIcons: Record<string, { focused: keyof typeof Ionicons.glyphMap; default: keyof typeof Ionicons.glyphMap }> = {
-  Chat: { focused: 'chatbubbles', default: 'chatbubbles-outline' },
-  Jobs: { focused: 'briefcase', default: 'briefcase-outline' },
-  Contacts: { focused: 'people', default: 'people-outline' },
-  Profile: { focused: 'person-circle', default: 'person-circle-outline' },
+const TAB_ICONS: Record<TabKey, { focused: IconName; default: IconName }> = {
+  TodayTab: { focused: 'home', default: 'home-outline' },
+  JobsTab: { focused: 'briefcase', default: 'briefcase-outline' },
+  PeopleTab: { focused: 'people', default: 'people-outline' },
+  MoneyTab: { focused: 'wallet', default: 'wallet-outline' },
+  SettingsTab: { focused: 'settings', default: 'settings-outline' },
 };
 
-function HeaderTitle() {
+const TAB_LABELS: Record<TabKey, string> = {
+  TodayTab: 'Today',
+  JobsTab: 'Jobs',
+  PeopleTab: 'People',
+  MoneyTab: 'Money',
+  SettingsTab: 'Settings',
+};
+
+const Tab = createBottomTabNavigator<RootTabParamList>();
+const TodayStack = createNativeStackNavigator<TodayStackParamList>();
+const JobsStack = createNativeStackNavigator<JobsStackParamList>();
+const PeopleStack = createNativeStackNavigator<PeopleStackParamList>();
+const MoneyStack = createNativeStackNavigator<MoneyStackParamList>();
+const SettingsStack = createNativeStackNavigator<SettingsStackParamList>();
+
+const stackScreenOptions = {
+  header: () => <TopBar />,
+  contentStyle: { backgroundColor: C.bg },
+} as const;
+
+function TodayStackNav() {
   return (
-    <View style={styles.headerTitleRow}>
-      <Logo width={120} height={28} />
-    </View>
+    <TodayStack.Navigator screenOptions={stackScreenOptions}>
+      <TodayStack.Screen name="Today" component={TodayScreen} />
+      <TodayStack.Screen name="Calendar" component={CalendarScreen} />
+      <TodayStack.Screen name="Threads" component={ThreadsScreen} />
+    </TodayStack.Navigator>
   );
 }
 
-function HeaderBackground() {
+function JobsStackNav() {
   return (
-    <View style={styles.headerBg}>
-      <View style={styles.headerBgSolid} />
-      <LinearGradient
-        colors={[COLORS.navy, COLORS.userBubble]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.headerGradientLine}
-      />
-    </View>
+    <JobsStack.Navigator screenOptions={stackScreenOptions}>
+      <JobsStack.Screen name="Jobs" component={JobsScreen} />
+    </JobsStack.Navigator>
+  );
+}
+
+function PeopleStackNav() {
+  return (
+    <PeopleStack.Navigator screenOptions={stackScreenOptions}>
+      <PeopleStack.Screen name="People" component={PeopleScreen} />
+    </PeopleStack.Navigator>
+  );
+}
+
+function MoneyStackNav() {
+  return (
+    <MoneyStack.Navigator screenOptions={stackScreenOptions}>
+      <MoneyStack.Screen name="Money" component={MoneyScreen} />
+    </MoneyStack.Navigator>
+  );
+}
+
+function SettingsStackNav() {
+  return (
+    <SettingsStack.Navigator screenOptions={stackScreenOptions}>
+      <SettingsStack.Screen name="Settings" component={SettingsScreen} />
+      <SettingsStack.Screen name="SettingsDetail" component={SettingsDetailScreen} />
+    </SettingsStack.Navigator>
   );
 }
 
@@ -49,8 +104,8 @@ export default function AppNavigator() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color={COLORS.navy} />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: C.bg }}>
+        <ActivityIndicator size="large" color={C.ink} />
       </View>
     );
   }
@@ -67,43 +122,32 @@ export default function AppNavigator() {
     <NavigationContainer>
       <Tab.Navigator
         screenOptions={({ route }) => ({
-          headerTitle: () => <HeaderTitle />,
-          headerBackground: () => <HeaderBackground />,
-          headerTitleAlign: 'center',
-          headerStyle: { height: 100 },
-          headerTintColor: COLORS.white,
-          tabBarActiveTintColor: COLORS.white,
-          tabBarInactiveTintColor: 'rgba(255,255,255,0.5)',
-          tabBarStyle: { backgroundColor: COLORS.navy, borderTopWidth: 0 },
+          headerShown: false,
+          tabBarActiveTintColor: C.ink,
+          tabBarInactiveTintColor: C.muted,
+          tabBarStyle: {
+            backgroundColor: C.bg,
+            borderTopWidth: 1,
+            borderTopColor: C.sep,
+          },
+          tabBarLabelStyle: {
+            fontSize: 10,
+            fontWeight: '700',
+          },
+          tabBarLabel: TAB_LABELS[route.name],
           tabBarIcon: ({ focused, color, size }) => {
-            const icons = tabIcons[route.name];
+            const icons = TAB_ICONS[route.name];
             const iconName = focused ? icons.focused : icons.default;
             return <Ionicons name={iconName} size={size} color={color} />;
           },
         })}
       >
-        <Tab.Screen name="Chat" component={ChatScreen} />
-        <Tab.Screen name="Jobs" component={JobsScreen} />
-        <Tab.Screen name="Contacts" component={ContactsScreen} />
-        <Tab.Screen name="Profile" component={ProfileScreen} />
+        <Tab.Screen name="TodayTab" component={TodayStackNav} />
+        <Tab.Screen name="JobsTab" component={JobsStackNav} />
+        <Tab.Screen name="PeopleTab" component={PeopleStackNav} />
+        <Tab.Screen name="MoneyTab" component={MoneyStackNav} />
+        <Tab.Screen name="SettingsTab" component={SettingsStackNav} />
       </Tab.Navigator>
     </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  headerTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerBg: {
-    flex: 1,
-  },
-  headerBgSolid: {
-    flex: 1,
-    backgroundColor: COLORS.navy,
-  },
-  headerGradientLine: {
-    height: 3,
-  },
-});

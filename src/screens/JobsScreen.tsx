@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../constants/theme';
+import { C } from '../constants/theme';
 import { apiRequest } from '../api/client';
 
 interface Job {
@@ -20,15 +20,17 @@ interface Job {
   location?: string;
 }
 
-const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
-  pending: { bg: '#FFF3CD', text: '#856404' },
-  in_progress: { bg: '#D6EAFF', text: '#004085' },
-  completed: { bg: '#D4EDDA', text: '#155724' },
+const STATUS_TONES: Record<string, { fg: string; bg: string }> = {
+  pending: { fg: C.amber, bg: C.amberSoft },
+  in_progress: { fg: C.blue, bg: C.blueSoft },
+  active: { fg: C.green, bg: C.greenSoft },
+  completed: { fg: C.green, bg: C.greenSoft },
+  delayed: { fg: C.amber, bg: C.amberSoft },
 };
 
-function getStatusStyle(status: string) {
+function getStatusTone(status: string) {
   const key = status.toLowerCase().replace(/[\s-]+/g, '_');
-  return STATUS_STYLES[key] ?? { bg: COLORS.lightGray, text: COLORS.gray };
+  return STATUS_TONES[key] ?? { fg: C.muted, bg: C.inset };
 }
 
 function formatStatus(status: string) {
@@ -66,7 +68,7 @@ export default function JobsScreen() {
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color={COLORS.navy} />
+        <ActivityIndicator size="large" color={C.ink} />
       </View>
     );
   }
@@ -82,25 +84,30 @@ export default function JobsScreen() {
 
   if (jobs.length === 0) {
     return (
-      <View style={styles.centered}>
-        <Ionicons name="briefcase-outline" size={56} color={COLORS.gray} style={{ marginBottom: 12 }} />
-        <Text style={styles.emptyTitle}>No jobs yet</Text>
-        <Text style={styles.emptySubtext}>When you create or get assigned a job, it will show up here.</Text>
+      <View style={styles.empty}>
+        <Text style={styles.h1}>Jobs</Text>
+        <View style={styles.emptyBox}>
+          <Ionicons name="briefcase-outline" size={36} color={C.faded} style={{ marginBottom: 10 }} />
+          <Text style={styles.emptyTitle}>No jobs yet</Text>
+          <Text style={styles.emptySubtext}>
+            When you create or get assigned a job, it will show up here.
+          </Text>
+        </View>
       </View>
     );
   }
 
   const renderJob = ({ item }: { item: Job }) => {
-    const badge = getStatusStyle(item.status);
+    const tone = getStatusTone(item.status);
     return (
-      <TouchableOpacity style={styles.card} activeOpacity={0.7}>
-        <View style={styles.cardContent}>
+      <TouchableOpacity style={styles.row} activeOpacity={0.7}>
+        <View style={styles.rowText}>
           <Text style={styles.jobTitle} numberOfLines={1}>
             {item.title}
           </Text>
-          <View style={styles.cardRow}>
-            <View style={[styles.badge, { backgroundColor: badge.bg }]}>
-              <Text style={[styles.badgeText, { color: badge.text }]}>
+          <View style={styles.rowMeta}>
+            <View style={[styles.badge, { backgroundColor: tone.bg }]}>
+              <Text style={[styles.badgeText, { color: tone.fg }]}>
                 {formatStatus(item.status)}
               </Text>
             </View>
@@ -111,34 +118,43 @@ export default function JobsScreen() {
             ) : null}
           </View>
         </View>
-        <Ionicons name="chevron-forward" size={20} color={COLORS.gray} />
+        <Ionicons name="chevron-forward" size={18} color={C.faded} />
       </TouchableOpacity>
     );
   };
 
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.h1}>Jobs</Text>
+        <Text style={styles.subtitle}>
+          {jobs.length} {jobs.length === 1 ? 'job' : 'jobs'}
+        </Text>
+      </View>
+
       <View style={styles.searchBar}>
-        <Ionicons name="search" size={18} color={COLORS.gray} />
+        <Ionicons name="search" size={16} color={C.faded} />
         <TextInput
           style={styles.searchInput}
-          placeholder="Search jobs..."
-          placeholderTextColor={COLORS.placeholder}
+          placeholder="Search jobs"
+          placeholderTextColor={C.faded}
           value={search}
           onChangeText={setSearch}
           autoCorrect={false}
         />
       </View>
+
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
         renderItem={renderJob}
         contentContainerStyle={styles.list}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={COLORS.navy}
+            tintColor={C.ink}
           />
         }
       />
@@ -149,84 +165,118 @@ export default function JobsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.lightGray,
+    backgroundColor: C.bg,
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.white,
+    backgroundColor: C.bg,
+  },
+  empty: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    backgroundColor: C.bg,
+  },
+  emptyBox: {
+    marginTop: 32,
+    paddingVertical: 36,
+    paddingHorizontal: 20,
+    backgroundColor: C.canvas,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: C.sep,
+    alignItems: 'center',
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 12,
+  },
+  h1: {
+    fontSize: 30,
+    fontWeight: '900',
+    color: C.ink,
+    letterSpacing: -0.8,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: C.muted,
+    marginTop: 4,
   },
   emptyTitle: {
-    fontSize: 22,
-    fontWeight: '600',
-    color: COLORS.navy,
-    marginBottom: 8,
+    fontSize: 18,
+    fontWeight: '800',
+    color: C.ink,
+    marginBottom: 4,
   },
   emptySubtext: {
-    fontSize: 15,
-    color: COLORS.gray,
+    fontSize: 13,
+    color: C.muted,
+    textAlign: 'center',
+    lineHeight: 18,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.white,
-    marginHorizontal: 12,
-    marginTop: 12,
-    marginBottom: 4,
+    backgroundColor: C.canvas,
+    marginHorizontal: 20,
+    marginBottom: 8,
     paddingHorizontal: 12,
-    borderRadius: 12,
-    height: 42,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: C.sep,
+    height: 40,
     gap: 8,
   },
   searchInput: {
     flex: 1,
-    fontSize: 15,
-    color: COLORS.black,
+    fontSize: 14,
+    color: C.ink,
   },
   list: {
-    padding: 12,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 32,
   },
-  card: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.white,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 10,
-    shadowColor: COLORS.black,
-    shadowOpacity: 0.06,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
-    elevation: 2,
+    paddingVertical: 14,
+    gap: 12,
   },
-  cardContent: {
+  rowText: {
     flex: 1,
-    marginRight: 8,
+    minWidth: 0,
   },
   jobTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
-    color: COLORS.navy,
-    marginBottom: 6,
+    color: C.ink,
+    marginBottom: 4,
   },
-  cardRow: {
+  rowMeta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
   },
   badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
   },
   badgeText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 11,
+    fontWeight: '700',
   },
   location: {
-    fontSize: 13,
-    color: COLORS.gray,
+    fontSize: 12,
+    color: C.muted,
     flexShrink: 1,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: C.sep,
   },
 });
