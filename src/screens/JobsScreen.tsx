@@ -1,198 +1,162 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
-  FlatList,
-  StyleSheet,
-  ActivityIndicator,
-  RefreshControl,
+  ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
+  StyleSheet,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { C } from '../constants/theme';
-import { apiRequest } from '../api/client';
+import EmptyState from '../components/EmptyState';
+import { useJobs } from '../hooks/useJobs';
+import type { Job, WorkStatus } from '../api/types';
 
-interface Job {
-  id: string;
-  title: string;
-  status: string;
-  location?: string;
-}
+type Filter = 'all' | 'active' | 'pending' | 'completed';
 
-const STATUS_TONES: Record<string, { fg: string; bg: string }> = {
-  pending: { fg: C.amber, bg: C.amberSoft },
-  in_progress: { fg: C.blue, bg: C.blueSoft },
-  active: { fg: C.green, bg: C.greenSoft },
-  completed: { fg: C.green, bg: C.greenSoft },
-  delayed: { fg: C.amber, bg: C.amberSoft },
+const STATUS_META: Record<WorkStatus, { label: string; fg: string }> = {
+  pending: { label: 'Pending', fg: C.blue },
+  in_progress: { label: 'Active', fg: C.green },
+  failed: { label: 'Failed', fg: C.amber },
+  completed: { label: 'Done', fg: C.muted },
+  cancelled: { label: 'Cancelled', fg: C.faded },
 };
 
-function getStatusTone(status: string) {
-  const key = status.toLowerCase().replace(/[\s-]+/g, '_');
-  return STATUS_TONES[key] ?? { fg: C.muted, bg: C.inset };
-}
-
-function formatStatus(status: string) {
-  return status
-    .replace(/[_-]/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+function inBucket(status: WorkStatus, filter: Filter): boolean {
+  if (filter === 'all') return true;
+  if (filter === 'active') return status === 'in_progress';
+  if (filter === 'pending') return status === 'pending';
+  if (filter === 'completed') return status === 'completed';
+  return true;
 }
 
 export default function JobsScreen() {
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<Filter>('all');
+  const { jobs, totalCount, loading } = useJobs();
 
-  const fetchJobs = useCallback(async () => {
-    try {
-      const res = await apiRequest('/v1/jobs');
-      const data = await res.json();
-      setJobs(Array.isArray(data) ? data : data.jobs ?? []);
-    } catch {
-      // keep current list on error
-    }
-  }, []);
+  const filtered = jobs.filter((j) => inBucket(j.status, filter));
+  const openCount = jobs.filter(
+    (j) => j.status !== 'completed' && j.status !== 'cancelled',
+  ).length;
 
-  useEffect(() => {
-    fetchJobs().finally(() => setLoading(false));
-  }, [fetchJobs]);
-
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await fetchJobs();
-    setRefreshing(false);
-  }, [fetchJobs]);
-
-  if (loading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={C.ink} />
-      </View>
-    );
-  }
-
-  const query = search.toLowerCase().trim();
-  const filtered = query
-    ? jobs.filter(
-        (j) =>
-          j.title.toLowerCase().includes(query) ||
-          (j.location && j.location.toLowerCase().includes(query)),
-      )
-    : jobs;
-
-  if (jobs.length === 0) {
-    return (
-      <View style={styles.empty}>
-        <Text style={styles.h1}>Jobs</Text>
-        <View style={styles.emptyBox}>
-          <Ionicons name="briefcase-outline" size={36} color={C.faded} style={{ marginBottom: 10 }} />
-          <Text style={styles.emptyTitle}>No jobs yet</Text>
-          <Text style={styles.emptySubtext}>
-            When you create or get assigned a job, it will show up here.
-          </Text>
-        </View>
-      </View>
-    );
-  }
-
-  const renderJob = ({ item }: { item: Job }) => {
-    const tone = getStatusTone(item.status);
-    return (
-      <TouchableOpacity style={styles.row} activeOpacity={0.7}>
-        <View style={styles.rowText}>
-          <Text style={styles.jobTitle} numberOfLines={1}>
-            {item.title}
-          </Text>
-          <View style={styles.rowMeta}>
-            <View style={[styles.badge, { backgroundColor: tone.bg }]}>
-              <Text style={[styles.badgeText, { color: tone.fg }]}>
-                {formatStatus(item.status)}
-              </Text>
-            </View>
-            {item.location ? (
-              <Text style={styles.location} numberOfLines={1}>
-                {item.location}
-              </Text>
-            ) : null}
-          </View>
-        </View>
-        <Ionicons name="chevron-forward" size={18} color={C.faded} />
-      </TouchableOpacity>
-    );
+  const counts: Record<Filter, number> = {
+    all: jobs.length,
+    active: jobs.filter((j) => j.status === 'in_progress').length,
+    pending: jobs.filter((j) => j.status === 'pending').length,
+    completed: jobs.filter((j) => j.status === 'completed').length,
   };
 
+  const tabs: Array<{ id: Filter; label: string }> = [
+    { id: 'all', label: 'All' },
+    { id: 'active', label: 'Active' },
+    { id: 'pending', label: 'Pending' },
+    { id: 'completed', label: 'Done' },
+  ];
+
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.root}
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+    >
       <View style={styles.header}>
         <Text style={styles.h1}>Jobs</Text>
         <Text style={styles.subtitle}>
-          {jobs.length} {jobs.length === 1 ? 'job' : 'jobs'}
+          {totalCount} total · {openCount} open
         </Text>
       </View>
 
-      <View style={styles.searchBar}>
-        <Ionicons name="search" size={16} color={C.faded} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search jobs"
-          placeholderTextColor={C.faded}
-          value={search}
-          onChangeText={setSearch}
-          autoCorrect={false}
-        />
+      <View style={styles.tabRow}>
+        {tabs.map((t) => {
+          const active = t.id === filter;
+          return (
+            <TouchableOpacity
+              key={t.id}
+              onPress={() => setFilter(t.id)}
+              activeOpacity={0.7}
+              style={[styles.tabBtn, active && styles.tabBtnActive]}
+            >
+              <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>
+                {t.label}{' '}
+                <Text style={styles.tabCount}>{counts[t.id]}</Text>
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
-      <FlatList
-        data={filtered}
-        keyExtractor={(item) => item.id}
-        renderItem={renderJob}
-        contentContainerStyle={styles.list}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={C.ink}
+      <View style={styles.body}>
+        {loading && jobs.length === 0 ? (
+          <View style={styles.loadingBox}>
+            <ActivityIndicator color={C.ink} />
+          </View>
+        ) : filtered.length === 0 ? (
+          <EmptyState
+            message={
+              filter === 'all'
+                ? 'No jobs yet. Text 888-513-3613 to start your first one.'
+                : 'No jobs in this view. Try All to see everything.'
+            }
           />
-        }
-      />
+        ) : (
+          filtered.map((j, idx) => (
+            <JobRow key={j.id} job={j} isLast={idx === filtered.length - 1} />
+          ))
+        )}
+      </View>
+    </ScrollView>
+  );
+}
+
+function JobRow({ job, isLast }: { job: Job; isLast: boolean }) {
+  const meta = STATUS_META[job.status];
+  const subParts = [job.subcontractors_name, job.address].filter(Boolean);
+  const subtitle = subParts.length > 0 ? subParts.join(' · ') : '—';
+  const progress =
+    job.tasks_total > 0 ? `${job.tasks_done}/${job.tasks_total} tasks` : null;
+
+  return (
+    <View style={[styles.row, !isLast && styles.rowBorder]}>
+      <View style={[styles.dot, { backgroundColor: meta.fg }]} />
+      <View style={styles.rowText}>
+        <View style={styles.titleLine}>
+          <Text style={styles.jobTitle} numberOfLines={1}>
+            {job.title}
+          </Text>
+          {job.overdue ? (
+            <View style={styles.overdueBadge}>
+              <Text style={styles.overdueText}>OVERDUE</Text>
+            </View>
+          ) : null}
+        </View>
+        <Text style={styles.jobSubtitle} numberOfLines={1}>
+          {subtitle}
+        </Text>
+      </View>
+      <View style={styles.rowMeta}>
+        <Text style={[styles.statusLabel, { color: meta.fg }]}>
+          {meta.label}
+        </Text>
+        {progress ? (
+          <Text style={styles.progress}>{progress}</Text>
+        ) : null}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
     backgroundColor: C.bg,
   },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: C.bg,
-  },
-  empty: {
-    flex: 1,
+  content: {
     paddingHorizontal: 20,
     paddingTop: 24,
-    backgroundColor: C.bg,
-  },
-  emptyBox: {
-    marginTop: 32,
-    paddingVertical: 36,
-    paddingHorizontal: 20,
-    backgroundColor: C.canvas,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: C.sep,
-    alignItems: 'center',
+    paddingBottom: 48,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 12,
+    marginBottom: 14,
   },
   h1: {
     fontSize: 30,
@@ -205,78 +169,100 @@ const styles = StyleSheet.create({
     color: C.muted,
     marginTop: 4,
   },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: C.ink,
-    marginBottom: 4,
-  },
-  emptySubtext: {
-    fontSize: 13,
-    color: C.muted,
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-  searchBar: {
+  tabRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: C.canvas,
-    marginHorizontal: 20,
-    marginBottom: 8,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: C.sep,
-    height: 40,
-    gap: 8,
+    gap: 4,
+    marginBottom: 10,
+    flexWrap: 'wrap',
   },
-  searchInput: {
-    flex: 1,
-    fontSize: 14,
+  tabBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  tabBtnActive: {
+    borderBottomColor: C.ink,
+  },
+  tabLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: C.muted,
+  },
+  tabLabelActive: {
     color: C.ink,
   },
-  list: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 32,
+  tabCount: {
+    color: C.faded,
+    fontWeight: '600',
+  },
+  body: {
+    paddingTop: 4,
+    borderTopWidth: 1,
+    borderTopColor: C.sep,
+  },
+  loadingBox: {
+    paddingVertical: 36,
+    alignItems: 'center',
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
     gap: 12,
+    paddingVertical: 12,
+  },
+  rowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: C.sep,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   rowText: {
     flex: 1,
     minWidth: 0,
   },
-  jobTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: C.ink,
-    marginBottom: 4,
-  },
-  rowMeta: {
+  titleLine: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  badgeText: {
-    fontSize: 11,
+  jobTitle: {
+    flexShrink: 1,
+    fontSize: 14,
     fontWeight: '700',
+    color: C.ink,
   },
-  location: {
+  overdueBadge: {
+    backgroundColor: '#FDEEEC',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  overdueText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#8A2A1F',
+    letterSpacing: 0.6,
+  },
+  jobSubtitle: {
     fontSize: 12,
     color: C.muted,
-    flexShrink: 1,
+    marginTop: 2,
   },
-  separator: {
-    height: 1,
-    backgroundColor: C.sep,
+  rowMeta: {
+    alignItems: 'flex-end',
+    minWidth: 64,
+  },
+  statusLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  progress: {
+    fontSize: 11,
+    color: C.faded,
+    marginTop: 2,
   },
 });
