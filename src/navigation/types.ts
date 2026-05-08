@@ -1,19 +1,25 @@
 export type TodayStackParamList = {
   Today: undefined;
-  Calendar: undefined;
-  Threads: undefined;
 };
 
 export type JobsStackParamList = {
   Jobs: undefined;
 };
 
-export type PeopleStackParamList = {
-  People: undefined;
+export type CalendarStackParamList = {
+  Calendar: undefined;
 };
 
 export type MoneyStackParamList = {
   Money: undefined;
+};
+
+export type ThreadsStackParamList = {
+  Threads: undefined;
+};
+
+export type PeopleStackParamList = {
+  People: undefined;
 };
 
 export type SettingsStackParamList = {
@@ -21,10 +27,16 @@ export type SettingsStackParamList = {
   SettingsDetail: { id: string; label: string };
 };
 
-export type RootTabParamList = {
+export type TabsParamList = {
   TodayTab: undefined;
   JobsTab: undefined;
-  PeopleTab: undefined;
+  CalendarTab: undefined;
   MoneyTab: undefined;
-  SettingsTab: undefined;
+  ThreadsTab: undefined;
+};
+
+export type RootStackParamList = {
+  Tabs: undefined;
+  PeopleStack: undefined;
+  SettingsStack: undefined;
 };

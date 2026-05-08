@@ -1,11 +1,11 @@
 import React, { useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { NavigationProp } from '@react-navigation/native';
 import { C } from '../constants/theme';
 import SectionHeader from '../components/SectionHeader';
 import EmptyState from '../components/EmptyState';
-import type { TodayStackParamList } from '../navigation/types';
+import type { TabsParamList } from '../navigation/types';
 
 const STATS: Array<{ label: string }> = [
   { label: 'Pending' },
@@ -15,7 +15,8 @@ const STATS: Array<{ label: string }> = [
 ];
 
 export default function TodayScreen() {
-  const nav = useNavigation<NativeStackNavigationProp<TodayStackParamList>>();
+  const nav = useNavigation<NavigationProp<TabsParamList>>();
+  const tabs = nav.getParent<NavigationProp<TabsParamList>>();
 
   const { greeting, dateStr } = useMemo(() => {
     const now = new Date();
@@ -82,7 +83,7 @@ export default function TodayScreen() {
         <SectionHeader
           title="Calendar"
           meta="See all"
-          onSeeAll={() => nav.navigate('Calendar')}
+          onSeeAll={() => tabs?.navigate('CalendarTab')}
         />
         <EmptyState message="No events this week." />
       </View>
@@ -91,7 +92,7 @@ export default function TodayScreen() {
         <SectionHeader
           title="Threads"
           meta="See all"
-          onSeeAll={() => nav.navigate('Threads')}
+          onSeeAll={() => tabs?.navigate('ThreadsTab')}
         />
         <EmptyState message="No active threads. TackPilot has nothing to handle yet." />
       </View>

@@ -17,38 +17,44 @@ import SettingsDetailScreen from '../screens/SettingsDetailScreen';
 import CalendarScreen from '../screens/CalendarScreen';
 import ThreadsScreen from '../screens/ThreadsScreen';
 import type {
-  RootTabParamList,
+  RootStackParamList,
+  TabsParamList,
   TodayStackParamList,
   JobsStackParamList,
-  PeopleStackParamList,
+  CalendarStackParamList,
   MoneyStackParamList,
+  ThreadsStackParamList,
+  PeopleStackParamList,
   SettingsStackParamList,
 } from './types';
 
 type IconName = keyof typeof Ionicons.glyphMap;
-type TabKey = keyof RootTabParamList;
+type TabKey = keyof TabsParamList;
 
-const TAB_ICONS: Record<TabKey, { focused: IconName; default: IconName }> = {
-  TodayTab: { focused: 'home', default: 'home-outline' },
-  JobsTab: { focused: 'briefcase', default: 'briefcase-outline' },
-  PeopleTab: { focused: 'people', default: 'people-outline' },
-  MoneyTab: { focused: 'wallet', default: 'wallet-outline' },
-  SettingsTab: { focused: 'settings', default: 'settings-outline' },
+const TAB_ICONS: Record<TabKey, IconName> = {
+  TodayTab: 'home-outline',
+  JobsTab: 'hammer-outline',
+  CalendarTab: 'calendar-outline',
+  MoneyTab: 'cash-outline',
+  ThreadsTab: 'chatbubbles-outline',
 };
 
 const TAB_LABELS: Record<TabKey, string> = {
   TodayTab: 'Today',
   JobsTab: 'Jobs',
-  PeopleTab: 'People',
+  CalendarTab: 'Calendar',
   MoneyTab: 'Money',
-  SettingsTab: 'Settings',
+  ThreadsTab: 'Threads',
 };
 
-const Tab = createBottomTabNavigator<RootTabParamList>();
+const RootStack = createNativeStackNavigator<RootStackParamList>();
+const Tabs = createBottomTabNavigator<TabsParamList>();
 const TodayStack = createNativeStackNavigator<TodayStackParamList>();
 const JobsStack = createNativeStackNavigator<JobsStackParamList>();
-const PeopleStack = createNativeStackNavigator<PeopleStackParamList>();
+const CalendarStack = createNativeStackNavigator<CalendarStackParamList>();
 const MoneyStack = createNativeStackNavigator<MoneyStackParamList>();
+const ThreadsStack = createNativeStackNavigator<ThreadsStackParamList>();
+const PeopleStack = createNativeStackNavigator<PeopleStackParamList>();
 const SettingsStack = createNativeStackNavigator<SettingsStackParamList>();
 
 const stackScreenOptions = {
@@ -60,8 +66,6 @@ function TodayStackNav() {
   return (
     <TodayStack.Navigator screenOptions={stackScreenOptions}>
       <TodayStack.Screen name="Today" component={TodayScreen} />
-      <TodayStack.Screen name="Calendar" component={CalendarScreen} />
-      <TodayStack.Screen name="Threads" component={ThreadsScreen} />
     </TodayStack.Navigator>
   );
 }
@@ -74,11 +78,11 @@ function JobsStackNav() {
   );
 }
 
-function PeopleStackNav() {
+function CalendarStackNav() {
   return (
-    <PeopleStack.Navigator screenOptions={stackScreenOptions}>
-      <PeopleStack.Screen name="People" component={PeopleScreen} />
-    </PeopleStack.Navigator>
+    <CalendarStack.Navigator screenOptions={stackScreenOptions}>
+      <CalendarStack.Screen name="Calendar" component={CalendarScreen} />
+    </CalendarStack.Navigator>
   );
 }
 
@@ -90,12 +94,59 @@ function MoneyStackNav() {
   );
 }
 
+function ThreadsStackNav() {
+  return (
+    <ThreadsStack.Navigator screenOptions={stackScreenOptions}>
+      <ThreadsStack.Screen name="Threads" component={ThreadsScreen} />
+    </ThreadsStack.Navigator>
+  );
+}
+
+function PeopleStackNav() {
+  return (
+    <PeopleStack.Navigator screenOptions={stackScreenOptions}>
+      <PeopleStack.Screen name="People" component={PeopleScreen} />
+    </PeopleStack.Navigator>
+  );
+}
+
 function SettingsStackNav() {
   return (
     <SettingsStack.Navigator screenOptions={stackScreenOptions}>
       <SettingsStack.Screen name="Settings" component={SettingsScreen} />
       <SettingsStack.Screen name="SettingsDetail" component={SettingsDetailScreen} />
     </SettingsStack.Navigator>
+  );
+}
+
+function TabsNav() {
+  return (
+    <Tabs.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarActiveTintColor: C.ink,
+        tabBarInactiveTintColor: C.muted,
+        tabBarStyle: {
+          backgroundColor: C.bg,
+          borderTopWidth: 1,
+          borderTopColor: C.sep,
+        },
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontWeight: '700',
+        },
+        tabBarLabel: TAB_LABELS[route.name],
+        tabBarIcon: ({ color, size }) => (
+          <Ionicons name={TAB_ICONS[route.name]} size={size} color={color} />
+        ),
+      })}
+    >
+      <Tabs.Screen name="TodayTab" component={TodayStackNav} />
+      <Tabs.Screen name="JobsTab" component={JobsStackNav} />
+      <Tabs.Screen name="CalendarTab" component={CalendarStackNav} />
+      <Tabs.Screen name="MoneyTab" component={MoneyStackNav} />
+      <Tabs.Screen name="ThreadsTab" component={ThreadsStackNav} />
+    </Tabs.Navigator>
   );
 }
 
@@ -120,34 +171,11 @@ export default function AppNavigator() {
 
   return (
     <NavigationContainer>
-      <Tab.Navigator
-        screenOptions={({ route }) => ({
-          headerShown: false,
-          tabBarActiveTintColor: C.ink,
-          tabBarInactiveTintColor: C.muted,
-          tabBarStyle: {
-            backgroundColor: C.bg,
-            borderTopWidth: 1,
-            borderTopColor: C.sep,
-          },
-          tabBarLabelStyle: {
-            fontSize: 10,
-            fontWeight: '700',
-          },
-          tabBarLabel: TAB_LABELS[route.name],
-          tabBarIcon: ({ focused, color, size }) => {
-            const icons = TAB_ICONS[route.name];
-            const iconName = focused ? icons.focused : icons.default;
-            return <Ionicons name={iconName} size={size} color={color} />;
-          },
-        })}
-      >
-        <Tab.Screen name="TodayTab" component={TodayStackNav} />
-        <Tab.Screen name="JobsTab" component={JobsStackNav} />
-        <Tab.Screen name="PeopleTab" component={PeopleStackNav} />
-        <Tab.Screen name="MoneyTab" component={MoneyStackNav} />
-        <Tab.Screen name="SettingsTab" component={SettingsStackNav} />
-      </Tab.Navigator>
+      <RootStack.Navigator screenOptions={{ headerShown: false }}>
+        <RootStack.Screen name="Tabs" component={TabsNav} />
+        <RootStack.Screen name="PeopleStack" component={PeopleStackNav} />
+        <RootStack.Screen name="SettingsStack" component={SettingsStackNav} />
+      </RootStack.Navigator>
     </NavigationContainer>
   );
 }

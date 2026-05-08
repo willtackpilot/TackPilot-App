@@ -4,7 +4,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { C } from '../constants/theme';
-import { useAuth } from '../context/AuthContext';
 import type { SettingsStackParamList } from '../navigation/types';
 
 type ItemId = 'profile' | 'agents' | 'connectors' | 'channels' | 'billing' | 'team';
@@ -22,7 +21,6 @@ const ITEMS: Item[] = [
 
 export default function SettingsScreen() {
   const nav = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
-  const { signOut } = useAuth();
 
   return (
     <ScrollView
@@ -51,14 +49,6 @@ export default function SettingsScreen() {
         ))}
       </View>
 
-      <TouchableOpacity
-        onPress={signOut}
-        activeOpacity={0.7}
-        style={styles.signOut}
-      >
-        <Ionicons name="log-out-outline" size={16} color={C.red} />
-        <Text style={styles.signOutText}>Sign out</Text>
-      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -112,18 +102,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: C.muted,
     marginTop: 2,
-  },
-  signOut: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    marginTop: 20,
-  },
-  signOutText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: C.red,
   },
 });
