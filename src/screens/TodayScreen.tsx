@@ -1,12 +1,17 @@
-import React, { useMemo } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NavigationProp } from '@react-navigation/native';
 import { C, money } from '../constants/theme';
 import SectionHeader from '../components/SectionHeader';
 import EmptyState from '../components/EmptyState';
 import { useDashboard } from '../hooks/useDashboard';
-import type { DashboardResponse } from '../api/types';
+import type {
+  DashboardResponse,
+  NeedsAttentionItem,
+  ScheduleTaskItem,
+  UpcomingTaskItem,
+} from '../api/types';
 import type { TabsParamList } from '../navigation/types';
 
 const STAT_KEYS: Array<{
@@ -22,10 +27,68 @@ const STAT_KEYS: Array<{
   { label: 'Activity', field: 'activity_feed_total' },
 ];
 
+const NEEDS_TYPE_LABEL: Record<string, string> = {
+  conflict_delay: 'Schedule conflict',
+  task_alert: 'Task alert',
+  message_alert: 'Message',
+  invoice_overdue: 'Invoice overdue',
+};
+
+function labelForNeedsType(t: string): string {
+  if (NEEDS_TYPE_LABEL[t]) return NEEDS_TYPE_LABEL[t];
+  return t.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function formatTime(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const h = d.getHours();
+  const m = d.getMinutes();
+  const ampm = h >= 12 ? 'p' : 'a';
+  const dh = h > 12 ? h - 12 : h === 0 ? 12 : h;
+  return m === 0 ? `${dh}${ampm}` : `${dh}:${m.toString().padStart(2, '0')}${ampm}`;
+}
+
+function readStr(item: ScheduleTaskItem, ...keys: string[]): string {
+  for (const k of keys) {
+    const v = item[k];
+    if (typeof v === 'string' && v.trim()) return v;
+  }
+  return '';
+}
+
+type Row = {
+  key: string;
+  time: string;
+  title: string;
+  subtitle: string;
+};
+
+function scheduleRow(item: ScheduleTaskItem, idx: number): Row {
+  const id = readStr(item, 'id');
+  const title = readStr(item, 'title', 'name', 'job_title') || 'Untitled';
+  const timeIso = readStr(item, 'planned_start_time', 'start_time', 'time');
+  const time = formatTime(timeIso) || readStr(item, 'time_label');
+  const subtitle =
+    readStr(item, 'assigned_to', 'crew_name', 'customer_name', 'customer', 'job_title');
+  return { key: id || `sched-${idx}`, time, title, subtitle };
+}
+
+function upcomingRow(item: UpcomingTaskItem): Row {
+  return {
+    key: item.id,
+    time: formatTime(item.planned_start_time),
+    title: item.title || 'Untitled',
+    subtitle: item.assigned_to || item.job_title || '',
+  };
+}
+
 export default function TodayScreen() {
   const nav = useNavigation<NavigationProp<TabsParamList>>();
   const tabs = nav.getParent<NavigationProp<TabsParamList>>();
   const { data } = useDashboard();
+  const [needsResolved, setNeedsResolved] = useState(false);
 
   const { greeting, dateStr } = useMemo(() => {
     const now = new Date();
@@ -40,6 +103,15 @@ export default function TodayScreen() {
   }, []);
 
   const firstName = 'Will';
+
+  const scheduleTasks = data?.todays_schedule?.tasks ?? [];
+  const scheduleCount = data?.todays_schedule?.total_count ?? scheduleTasks.length;
+  const scheduleRows = scheduleTasks.map(scheduleRow);
+
+  const upcomingRows = (data?.upcoming_tasks ?? []).slice(0, 5).map(upcomingRow);
+
+  const needsItem: NeedsAttentionItem | undefined = data?.needs_attention?.[0];
+  const showNeeds = !!needsItem && !needsResolved;
 
   return (
     <ScrollView
@@ -72,9 +144,44 @@ export default function TodayScreen() {
         })}
       </View>
 
+      {showNeeds && needsItem ? (
+        <View style={styles.section}>
+          <View style={styles.needsHeader}>
+            <View style={styles.needsDot} />
+            <Text style={styles.needsLabel}>Needs your eyes</Text>
+            <Text style={styles.needsType}>{labelForNeedsType(needsItem.type)}</Text>
+          </View>
+          <Text style={styles.needsMessage}>{needsItem.message}</Text>
+          <View style={styles.needsActions}>
+            <TouchableOpacity
+              onPress={() => setNeedsResolved(true)}
+              activeOpacity={0.85}
+              style={styles.needsPrimaryBtn}
+            >
+              <Text style={styles.needsPrimaryText}>Got it</Text>
+            </TouchableOpacity>
+            <View style={{ flex: 1 }} />
+            <TouchableOpacity
+              onPress={() => setNeedsResolved(true)}
+              activeOpacity={0.7}
+              style={styles.needsGhostBtn}
+            >
+              <Text style={styles.needsGhostText}>Snooze</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      ) : null}
+
       <View style={styles.section}>
-        <SectionHeader title="Today's jobs" meta="0 scheduled" />
-        <EmptyState message="No jobs scheduled for today." />
+        <SectionHeader
+          title="Today's jobs"
+          meta={`${scheduleCount} scheduled`}
+        />
+        {scheduleRows.length === 0 ? (
+          <EmptyState message="No jobs scheduled for today." />
+        ) : (
+          scheduleRows.map((r) => <TaskRow key={r.key} row={r} />)
+        )}
       </View>
 
       <View style={styles.section}>
@@ -100,7 +207,11 @@ export default function TodayScreen() {
           meta="See all"
           onSeeAll={() => tabs?.navigate('CalendarTab')}
         />
-        <EmptyState message="No events this week." />
+        {upcomingRows.length === 0 ? (
+          <EmptyState message="No events this week." />
+        ) : (
+          upcomingRows.map((r) => <TaskRow key={r.key} row={r} />)
+        )}
       </View>
 
       <View style={styles.section}>
@@ -111,12 +222,28 @@ export default function TodayScreen() {
         />
         <EmptyState message="No active threads. TackPilot has nothing to handle yet." />
       </View>
-
-      <View style={styles.section}>
-        <SectionHeader title="Needs eyes" />
-        <EmptyState message="Nothing waiting on you. You're clear." />
-      </View>
     </ScrollView>
+  );
+}
+
+function TaskRow({ row }: { row: Row }) {
+  return (
+    <View style={styles.taskRow}>
+      <Text style={styles.taskTime} numberOfLines={1}>
+        {row.time || '—'}
+      </Text>
+      <View style={styles.taskDot} />
+      <View style={styles.taskText}>
+        <Text style={styles.taskTitle} numberOfLines={1}>
+          {row.title}
+        </Text>
+        {row.subtitle ? (
+          <Text style={styles.taskSubtitle} numberOfLines={1}>
+            {row.subtitle}
+          </Text>
+        ) : null}
+      </View>
+    </View>
   );
 }
 
@@ -217,5 +344,91 @@ const styles = StyleSheet.create({
   cashflowLabel: {
     fontSize: 13,
     color: C.muted,
+  },
+  taskRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 10,
+  },
+  taskTime: {
+    width: 52,
+    fontSize: 13,
+    fontWeight: '600',
+    color: C.muted,
+  },
+  taskDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: C.muted,
+  },
+  taskText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  taskTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: C.ink,
+  },
+  taskSubtitle: {
+    fontSize: 12,
+    color: C.muted,
+    marginTop: 1,
+  },
+  needsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  needsDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: C.blue,
+  },
+  needsLabel: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: C.blue,
+  },
+  needsType: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: C.faded,
+  },
+  needsMessage: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: C.ink,
+    letterSpacing: -0.5,
+    lineHeight: 28,
+  },
+  needsActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 18,
+  },
+  needsPrimaryBtn: {
+    backgroundColor: C.ink,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 10,
+  },
+  needsPrimaryText: {
+    color: C.canvas,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  needsGhostBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
+  needsGhostText: {
+    color: C.muted,
+    fontSize: 13,
+    fontWeight: '700',
   },
 });
