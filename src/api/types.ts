@@ -80,6 +80,40 @@ export interface TodaysSchedule {
   total_count: number;
 }
 
+/* ---------- Jobs ---------- */
+
+/** Server-side WorkStatus enum used by jobs and tasks. */
+export type WorkStatus =
+  | 'pending'
+  | 'in_progress'
+  | 'failed'
+  | 'completed'
+  | 'cancelled';
+
+/**
+ * One row of GET /v1/job/list. The detail endpoint (JobResponse) carries
+ * planned_start_time and assigned_contacts; the list flattens to
+ * subcontractors_name (joined string) and omits planned_start_time.
+ */
+export interface Job {
+  id: string;
+  title: string;
+  status: WorkStatus;
+  address: string | null;
+  city: string | null;
+  phone: string | null;
+  subcontractors_name: string | null;
+  progress: number;
+  tasks_total: number;
+  tasks_done: number;
+  overdue: boolean;
+}
+
+export interface JobListResponse {
+  items: Job[];
+  total_count: number;
+}
+
 /* ---------- Calendar ---------- */
 
 export interface LinkedJob {
