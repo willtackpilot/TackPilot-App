@@ -3,7 +3,10 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-nati
 import { C, money } from '../constants/theme';
 import SectionHeader from '../components/SectionHeader';
 import EmptyState from '../components/EmptyState';
+import FAB from '../components/FAB';
+import Sparkline from '../components/Sparkline';
 import { useFinances } from '../hooks/useFinances';
+import { useDashboard } from '../hooks/useDashboard';
 import type { InvoiceItem } from '../api/types';
 
 type InvoiceTab = 'all' | 'overdue' | 'open';
@@ -38,6 +41,8 @@ function dueLabel(iv: InvoiceItem): string {
 export default function MoneyScreen() {
   const [tab, setTab] = useState<InvoiceTab>('all');
   const { data } = useFinances();
+  const { data: dashboard } = useDashboard();
+  const revenueSeries = (dashboard?.revenue_last_30_days ?? []).map((d) => d.amount);
 
   const invoices = data?.open_invoices?.invoices ?? [];
   const quickbooksConnected = data?.open_invoices?.quickbooks_connected ?? false;
@@ -62,8 +67,9 @@ export default function MoneyScreen() {
   const hasRevenue = hasAmount && collected > 0;
 
   return (
+    <View style={styles.root}>
     <ScrollView
-      style={styles.root}
+      style={styles.scroll}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
@@ -78,6 +84,11 @@ export default function MoneyScreen() {
           <Text style={styles.heroAmount}>
             {hasAmount ? money(collected) : '—'}
           </Text>
+          {revenueSeries.length >= 2 ? (
+            <View style={styles.sparkWrap}>
+              <Sparkline data={revenueSeries} width={80} height={24} stroke={C.ink} />
+            </View>
+          ) : null}
         </View>
         {!hasRevenue ? (
           <Text style={styles.subMeta}>No revenue yet this month.</Text>
@@ -132,6 +143,8 @@ export default function MoneyScreen() {
         )}
       </View>
     </ScrollView>
+    <FAB />
+    </View>
   );
 }
 
@@ -172,10 +185,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: C.bg,
   },
+  scroll: {
+    flex: 1,
+  },
   content: {
     paddingHorizontal: 20,
     paddingTop: 24,
-    paddingBottom: 48,
+    paddingBottom: 96,
   },
   header: {
     marginBottom: 24,
@@ -201,8 +217,11 @@ const styles = StyleSheet.create({
   },
   heroRow: {
     flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 10,
+    alignItems: 'flex-end',
+    gap: 12,
+  },
+  sparkWrap: {
+    paddingBottom: 12,
   },
   heroAmount: {
     fontSize: 48,

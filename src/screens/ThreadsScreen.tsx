@@ -13,6 +13,8 @@ import { C } from '../constants/theme';
 import EmptyState from '../components/EmptyState';
 import { useThreadList } from '../hooks/useThreadList';
 import { initialsOf, relTime } from '../utils/time';
+import { avatarColors } from '../utils/avatar';
+import FAB from '../components/FAB';
 import type { Subcontractor } from '../api/types';
 import type { ThreadsStackParamList } from '../navigation/types';
 
@@ -26,8 +28,9 @@ export default function ThreadsScreen() {
   const { threads, loading } = useThreadList();
 
   return (
+    <View style={styles.root}>
     <ScrollView
-      style={styles.root}
+      style={styles.scroll}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
@@ -59,6 +62,8 @@ export default function ThreadsScreen() {
         )}
       </View>
     </ScrollView>
+    <FAB />
+    </View>
   );
 }
 
@@ -73,6 +78,7 @@ function ThreadRow({
 }) {
   const unread = sub.unread_messages_count ?? 0;
   const time = relTime(sub.last_message_date);
+  const colors = avatarColors(sub.full_name);
 
   return (
     <TouchableOpacity
@@ -80,8 +86,10 @@ function ThreadRow({
       onPress={onPress}
       style={[styles.row, !isLast && styles.rowBorder]}
     >
-      <View style={styles.avatar}>
-        <Text style={styles.avatarText}>{initialsOf(sub.full_name)}</Text>
+      <View style={[styles.avatar, { backgroundColor: colors.bg }]}>
+        <Text style={[styles.avatarText, { color: colors.text }]}>
+          {initialsOf(sub.full_name)}
+        </Text>
       </View>
       <View style={styles.rowText}>
         <View style={styles.rowTitleLine}>
@@ -111,10 +119,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: C.bg,
   },
+  scroll: {
+    flex: 1,
+  },
   content: {
     paddingHorizontal: 20,
     paddingTop: 24,
-    paddingBottom: 48,
+    paddingBottom: 96,
   },
   header: {
     marginBottom: 16,
@@ -154,14 +165,12 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: C.inset,
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarText: {
     fontSize: 13,
     fontWeight: '800',
-    color: C.ink2,
   },
   rowText: {
     flex: 1,

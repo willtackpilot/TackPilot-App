@@ -9,7 +9,9 @@ import {
 } from 'react-native';
 import { C } from '../constants/theme';
 import EmptyState from '../components/EmptyState';
+import FAB from '../components/FAB';
 import { useCrew } from '../hooks/useCrew';
+import { avatarColors } from '../utils/avatar';
 import type { Subcontractor } from '../api/types';
 
 type Tab = 'crew' | 'customers';
@@ -36,8 +38,9 @@ export default function PeopleScreen() {
     totalCount === 1 ? '1 on your team' : `${totalCount} on your team`;
 
   return (
+    <View style={styles.root}>
     <ScrollView
-      style={styles.root}
+      style={styles.scroll}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
@@ -80,6 +83,8 @@ export default function PeopleScreen() {
         )}
       </View>
     </ScrollView>
+    <FAB />
+    </View>
   );
 }
 
@@ -129,11 +134,14 @@ function CrewTab({
 function CrewRow({ sub, isLast }: { sub: Subcontractor; isLast: boolean }) {
   const isActive = sub.status === 'active';
   const phone = formatPhone(sub.phone_number);
+  const colors = avatarColors(sub.full_name);
 
   return (
     <View style={[styles.row, !isLast && styles.rowBorder]}>
-      <View style={styles.avatar}>
-        <Text style={styles.avatarText}>{initialsOf(sub.full_name)}</Text>
+      <View style={[styles.avatar, { backgroundColor: colors.bg }]}>
+        <Text style={[styles.avatarText, { color: colors.text }]}>
+          {initialsOf(sub.full_name)}
+        </Text>
       </View>
       <View style={styles.rowText}>
         <Text style={styles.name} numberOfLines={1}>
@@ -167,10 +175,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: C.bg,
   },
+  scroll: {
+    flex: 1,
+  },
   content: {
     paddingHorizontal: 20,
     paddingTop: 24,
-    paddingBottom: 48,
+    paddingBottom: 96,
   },
   header: {
     marginBottom: 14,
@@ -279,14 +290,12 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: C.inset,
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarText: {
     fontSize: 12,
     fontWeight: '800',
-    color: C.ink2,
   },
   rowText: {
     flex: 1,

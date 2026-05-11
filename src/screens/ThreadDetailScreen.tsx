@@ -19,6 +19,7 @@ import { C } from '../constants/theme';
 import EmptyState from '../components/EmptyState';
 import { useThreadMessages } from '../hooks/useThreadMessages';
 import { initialsOf, relTime } from '../utils/time';
+import { avatarColors } from '../utils/avatar';
 import type { SubcontractorSMSResponse } from '../api/types';
 import type { ThreadsStackParamList } from '../navigation/types';
 
@@ -171,6 +172,7 @@ export function ThreadDetailHeader() {
   const nav = useNavigation<DetailNav>();
   const route = useRoute<DetailRoute>();
   const { name } = route.params;
+  const colors = avatarColors(name);
 
   return (
     <View style={styles.header}>
@@ -184,8 +186,10 @@ export function ThreadDetailHeader() {
         <Ionicons name="chevron-back" size={22} color={C.ink} />
       </TouchableOpacity>
 
-      <View style={styles.headerAvatar}>
-        <Text style={styles.headerAvatarText}>{initialsOf(name)}</Text>
+      <View style={[styles.headerAvatar, { backgroundColor: colors.bg }]}>
+        <Text style={[styles.headerAvatarText, { color: colors.text }]}>
+          {initialsOf(name)}
+        </Text>
       </View>
 
       <View style={styles.headerTitleWrap}>
@@ -342,14 +346,12 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: C.inset,
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerAvatarText: {
     fontSize: 12,
     fontWeight: '800',
-    color: C.ink2,
   },
   headerTitleWrap: {
     flex: 1,

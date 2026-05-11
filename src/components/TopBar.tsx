@@ -14,7 +14,6 @@ import type { NavigationProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { C } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
-import Logo from '../../assets/logo.svg';
 import type { RootStackParamList } from '../navigation/types';
 
 const PHONE = '888-513-3613';
@@ -44,6 +43,11 @@ export default function TopBar() {
     nav.navigate('PeopleStack');
   };
 
+  const callPhone = () => {
+    closeMenu();
+    void Linking.openURL(`tel:${PHONE_TEL}`);
+  };
+
   const handleSignOut = () => {
     closeMenu();
     void signOut();
@@ -57,19 +61,20 @@ export default function TopBar() {
       ]}
     >
       <View style={styles.left}>
-        <Logo width={110} height={24} />
+        <Text style={styles.wordmarkTack}>Tack</Text>
+        <Text style={styles.wordmarkPilot}>Pilot</Text>
       </View>
 
       <View style={styles.right}>
         <TouchableOpacity
-          onPress={() => Linking.openURL(`tel:${PHONE_TEL}`)}
+          onPress={() => console.log('bell tap')}
           activeOpacity={0.6}
-          style={styles.phoneBtn}
+          style={styles.iconBtn}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           accessibilityRole="button"
-          accessibilityLabel={`Call ${PHONE}`}
+          accessibilityLabel="Notifications"
         >
-          <Ionicons name="call" size={13} color={C.blue} />
-          <Text style={styles.phoneText}>{PHONE}</Text>
+          <Ionicons name="notifications-outline" size={20} color={C.ink2} />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -111,6 +116,12 @@ export default function TopBar() {
               </Text>
             </View>
 
+            <MenuRow
+              icon="call-outline"
+              label={PHONE}
+              color={C.ink2}
+              onPress={callPhone}
+            />
             <MenuRow
               icon="settings-outline"
               label="Settings"
@@ -171,25 +182,31 @@ const styles = StyleSheet.create({
   },
   left: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+    alignItems: 'baseline',
   },
   right: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-  },
-  phoneBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
   },
-  phoneText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: C.ink2,
+  wordmarkTack: {
+    fontFamily: 'Nunito_800ExtraBold',
+    fontSize: 22,
+    color: C.ink,
+    letterSpacing: -0.4,
+  },
+  wordmarkPilot: {
+    fontFamily: 'Nunito_800ExtraBold',
+    fontSize: 22,
+    color: C.blue,
+    letterSpacing: -0.4,
+  },
+  iconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   avatar: {
     width: 32,
@@ -209,7 +226,7 @@ const styles = StyleSheet.create({
   },
   menuCard: {
     position: 'absolute',
-    width: 220,
+    width: 240,
     backgroundColor: C.canvas,
     borderRadius: 14,
     borderWidth: 1,
