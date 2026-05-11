@@ -58,7 +58,8 @@ export default function MoneyScreen() {
 
   const health = data?.health_summary;
   const collected = health?.revenue_this_month ?? null;
-  const showHero = collected !== null && collected > 0;
+  const hasAmount = collected !== null;
+  const hasRevenue = hasAmount && collected > 0;
 
   return (
     <ScrollView
@@ -75,10 +76,10 @@ export default function MoneyScreen() {
         <Text style={styles.heroLabel}>You collected this month</Text>
         <View style={styles.heroRow}>
           <Text style={styles.heroAmount}>
-            {showHero ? money(collected) : '—'}
+            {hasAmount ? money(collected) : '—'}
           </Text>
         </View>
-        {!showHero ? (
+        {!hasRevenue ? (
           <Text style={styles.subMeta}>No revenue yet this month.</Text>
         ) : null}
       </View>
