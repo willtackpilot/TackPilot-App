@@ -50,7 +50,12 @@ export default function TopBar() {
   };
 
   return (
-    <View style={styles.bar}>
+    <View
+      style={[
+        styles.bar,
+        { paddingTop: insets.top, height: HEADER_HEIGHT + insets.top },
+      ]}
+    >
       <View style={styles.left}>
         <Logo width={110} height={24} />
       </View>
@@ -68,9 +73,13 @@ export default function TopBar() {
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() => setMenuOpen(true)}
+          onPress={() => {
+            console.log('avatar tap');
+            setMenuOpen(true);
+          }}
           activeOpacity={0.7}
           style={styles.avatar}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           accessibilityRole="button"
           accessibilityLabel="Account menu"
         >
@@ -152,7 +161,6 @@ function MenuRow({
 
 const styles = StyleSheet.create({
   bar: {
-    height: HEADER_HEIGHT,
     paddingHorizontal: 16,
     backgroundColor: C.bg,
     borderBottomWidth: StyleSheet.hairlineWidth,

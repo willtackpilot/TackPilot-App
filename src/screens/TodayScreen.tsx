@@ -138,11 +138,11 @@ export default function TodayScreen() {
 
       <View style={styles.statGrid}>
         {STAT_KEYS.map((s) => {
-          const value = data ? data[s.field] : null;
+          const display = data === null ? '—' : String(data[s.field] ?? 0);
           return (
             <View key={s.label} style={styles.statTile}>
               <Text style={styles.statLabel}>{s.label.toUpperCase()}</Text>
-              <Text style={styles.statValue}>{value ?? '—'}</Text>
+              <Text style={styles.statValue}>{display}</Text>
             </View>
           );
         })}
@@ -197,9 +197,7 @@ export default function TodayScreen() {
         <SectionHeader title="This month" />
         <View style={styles.cashflowHero}>
           <Text style={styles.cashflowAmount}>
-            {data && data.collected_this_month > 0
-              ? money(data.collected_this_month)
-              : '—'}
+            {data ? money(data.collected_this_month) : '—'}
           </Text>
           <Text style={styles.cashflowLabel}>this month</Text>
         </View>
