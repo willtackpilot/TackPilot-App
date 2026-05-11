@@ -8,6 +8,8 @@ import EmptyState from '../components/EmptyState';
 import { useDashboard } from '../hooks/useDashboard';
 import { useThreadList } from '../hooks/useThreadList';
 import { initialsOf, relTime } from '../utils/time';
+import { avatarColors } from '../utils/avatar';
+import FAB from '../components/FAB';
 import type {
   DashboardResponse,
   NeedsAttentionItem,
@@ -118,8 +120,9 @@ export default function TodayScreen() {
   const showNeeds = !!needsItem && !needsResolved;
 
   return (
+    <View style={styles.root}>
     <ScrollView
-      style={styles.root}
+      style={styles.scroll}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
@@ -229,16 +232,21 @@ export default function TodayScreen() {
         )}
       </View>
     </ScrollView>
+    <FAB />
+    </View>
   );
 }
 
 function ThreadMiniRow({ sub }: { sub: Subcontractor }) {
   const time = relTime(sub.last_message_date);
   const role = [sub.role, sub.trade].filter(Boolean).join(' · ') || 'Crew';
+  const colors = avatarColors(sub.full_name);
   return (
     <View style={styles.threadMiniRow}>
-      <View style={styles.threadMiniAvatar}>
-        <Text style={styles.threadMiniAvatarText}>{initialsOf(sub.full_name)}</Text>
+      <View style={[styles.threadMiniAvatar, { backgroundColor: colors.bg }]}>
+        <Text style={[styles.threadMiniAvatarText, { color: colors.text }]}>
+          {initialsOf(sub.full_name)}
+        </Text>
       </View>
       <View style={styles.threadMiniText}>
         <View style={styles.threadMiniTitleLine}>
@@ -281,10 +289,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: C.bg,
   },
+  scroll: {
+    flex: 1,
+  },
   content: {
     paddingHorizontal: 20,
     paddingTop: 20,
-    paddingBottom: 48,
+    paddingBottom: 96,
   },
   heading: {
     marginBottom: 20,
@@ -470,14 +481,12 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: C.inset,
     justifyContent: 'center',
     alignItems: 'center',
   },
   threadMiniAvatarText: {
     fontSize: 11,
     fontWeight: '800',
-    color: C.ink2,
   },
   threadMiniText: {
     flex: 1,

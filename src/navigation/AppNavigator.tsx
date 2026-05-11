@@ -7,6 +7,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { C } from '../constants/theme';
 import TopBar from '../components/TopBar';
+import { useJobs } from '../hooks/useJobs';
+import { useFinances } from '../hooks/useFinances';
+import { useThreadList } from '../hooks/useThreadList';
 import LoginScreen from '../screens/LoginScreen';
 import TodayScreen from '../screens/TodayScreen';
 import JobsScreen from '../screens/JobsScreen';
@@ -128,26 +131,55 @@ function SettingsStackNav() {
 }
 
 function TabsNav() {
+  // Badge data. NOTE: each hook is also called inside its corresponding
+  // screen, so the fetch fires twice (here + screen). Acceptable for now;
+  // see docs/TECH_DEBT.md.
+  const { jobs } = useJobs();
+  const { data: finances } = useFinances();
+  const { totalUnread } = useThreadList();
+
+  const jobsActive = jobs.filter((j) => j.status === 'in_progress').length;
+  const overdueCount = finances?.health_summary?.overdue_count ?? 0;
+
+  const tabBadges: Partial<Record<TabKey, number>> = {
+    JobsTab: jobsActive,
+    MoneyTab: overdueCount,
+    ThreadsTab: totalUnread,
+  };
+
   return (
     <Tabs.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarActiveTintColor: C.ink,
-        tabBarInactiveTintColor: C.muted,
-        tabBarStyle: {
-          backgroundColor: C.bg,
-          borderTopWidth: 1,
-          borderTopColor: C.sep,
-        },
-        tabBarLabelStyle: {
-          fontSize: 10,
-          fontWeight: '700',
-        },
-        tabBarLabel: TAB_LABELS[route.name],
-        tabBarIcon: ({ color, size }) => (
-          <Ionicons name={TAB_ICONS[route.name]} size={size} color={color} />
-        ),
-      })}
+      screenOptions={({ route }) => {
+        const badgeValue = tabBadges[route.name];
+        return {
+          headerShown: false,
+          tabBarActiveTintColor: C.ink,
+          tabBarInactiveTintColor: C.muted,
+          tabBarStyle: {
+            backgroundColor: C.bg,
+            borderTopWidth: 1,
+            borderTopColor: C.sep,
+          },
+          tabBarLabelStyle: {
+            fontSize: 10,
+            fontWeight: '700',
+          },
+          tabBarLabel: TAB_LABELS[route.name],
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name={TAB_ICONS[route.name]} size={size} color={color} />
+          ),
+          tabBarBadge: badgeValue && badgeValue > 0 ? badgeValue : undefined,
+          tabBarBadgeStyle: {
+            backgroundColor: C.red,
+            color: '#FFFFFF',
+            fontSize: 10,
+            fontWeight: '700',
+            minWidth: 16,
+            height: 16,
+            lineHeight: 14,
+          },
+        };
+      }}
     >
       <Tabs.Screen name="TodayTab" component={TodayStackNav} />
       <Tabs.Screen name="JobsTab" component={JobsStackNav} />

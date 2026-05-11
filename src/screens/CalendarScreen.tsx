@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { C } from '../constants/theme';
-import EmptyState from '../components/EmptyState';
+import FAB from '../components/FAB';
 import { useCalendar } from '../hooks/useCalendar';
 import { formatTime, isSameDay } from '../utils/time';
 import type { CalendarEvent } from '../api/types';
@@ -62,8 +62,9 @@ export default function CalendarScreen() {
   const eventsLabel = dayEvents.length === 1 ? '1 event' : `${dayEvents.length} events`;
 
   return (
+    <View style={styles.root}>
     <ScrollView
-      style={styles.root}
+      style={styles.scroll}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
@@ -107,7 +108,10 @@ export default function CalendarScreen() {
             <ActivityIndicator color={C.ink} />
           </View>
         ) : dayEvents.length === 0 ? (
-          <EmptyState message="No events this day. Text TackPilot to schedule one." />
+          <View style={styles.dayOff}>
+            <Text style={styles.dayOffEmoji}>🌴</Text>
+            <Text style={styles.dayOffText}>Day off</Text>
+          </View>
         ) : (
           dayEvents.map((e, idx) => (
             <EventRow
@@ -119,6 +123,8 @@ export default function CalendarScreen() {
         )}
       </View>
     </ScrollView>
+    <FAB />
+    </View>
   );
 }
 
@@ -154,10 +160,26 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: C.bg,
   },
+  scroll: {
+    flex: 1,
+  },
   content: {
     paddingHorizontal: 20,
     paddingTop: 24,
-    paddingBottom: 48,
+    paddingBottom: 96,
+  },
+  dayOff: {
+    alignItems: 'center',
+    paddingVertical: 56,
+  },
+  dayOffEmoji: {
+    fontSize: 48,
+    marginBottom: 8,
+  },
+  dayOffText: {
+    fontSize: 14,
+    color: C.muted,
+    fontWeight: '600',
   },
   header: {
     marginBottom: 20,

@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { C } from '../constants/theme';
 import EmptyState from '../components/EmptyState';
+import FAB from '../components/FAB';
 import { useJobs } from '../hooks/useJobs';
 import type { Job, WorkStatus } from '../api/types';
 
@@ -54,8 +55,9 @@ export default function JobsScreen() {
   ];
 
   return (
+    <View style={styles.root}>
     <ScrollView
-      style={styles.root}
+      style={styles.scroll}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
@@ -105,6 +107,8 @@ export default function JobsScreen() {
         )}
       </View>
     </ScrollView>
+    <FAB />
+    </View>
   );
 }
 
@@ -150,10 +154,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: C.bg,
   },
+  scroll: {
+    flex: 1,
+  },
   content: {
     paddingHorizontal: 20,
     paddingTop: 24,
-    paddingBottom: 48,
+    paddingBottom: 96,
   },
   header: {
     marginBottom: 14,
