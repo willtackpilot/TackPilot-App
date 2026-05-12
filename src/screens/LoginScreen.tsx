@@ -19,6 +19,7 @@ import {
 } from '@expo-google-fonts/nunito';
 import { C, API_BASE_URL } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
+import type { LoginResponse } from '../api/types';
 import Logo from '../../assets/logo.svg';
 
 export default function LoginScreen() {
@@ -47,16 +48,28 @@ export default function LoginScreen() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, is_remember: true }),
       });
-      const data = await res.json().catch(() => ({} as any));
+      const data = (await res.json().catch(() => ({}))) as Partial<LoginResponse> &
+        Record<string, unknown>;
       if (!res.ok) {
-        throw new Error(data.detail || data.message || 'Login failed');
+        throw new Error(
+          (data.detail as string | undefined) ??
+            (data.message as string | undefined) ??
+            'Login failed',
+        );
       }
-      const access = data.access_token ?? data.token ?? data.accessToken;
-      const refresh = data.refresh_token ?? data.refreshToken;
+      const access = data.access_token;
+      const refresh = data.refresh_token;
       if (!access) throw new Error('Login response missing access token');
-      await signIn(access, refresh);
-    } catch (err: any) {
-      setError(err?.message || 'Something went wrong. Please try again.');
+      const result = await signIn(access, refresh);
+      if (!result.success) {
+        setError(result.error ?? 'Sign in failed. Try again.');
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Something went wrong. Please try again.',
+      );
     } finally {
       setLoading(false);
     }

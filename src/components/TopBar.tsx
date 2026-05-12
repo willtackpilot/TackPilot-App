@@ -14,14 +14,13 @@ import type { NavigationProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { C } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
+import { useCurrentUser } from '../hooks/useCurrentUser';
+import { avatarColors } from '../utils/avatar';
+import { initialsOf } from '../utils/time';
 import type { RootStackParamList } from '../navigation/types';
 
 const PHONE = '888-513-3613';
 const PHONE_TEL = '+18885133613';
-
-const DISPLAY_NAME = 'Will Smith';
-const DISPLAY_EMAIL = 'you@tackpilot.com';
-const INITIALS = 'WS';
 
 const HEADER_HEIGHT = 56;
 
@@ -30,6 +29,14 @@ export default function TopBar() {
   const nav = useNavigation<NavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
   const { signOut } = useAuth();
+  const { user } = useCurrentUser();
+
+  const displayName = user
+    ? `${user.first_name} ${user.last_name}`.trim()
+    : '—';
+  const displayEmail = user?.email ?? '';
+  const initials = initialsOf(displayName === '—' ? '' : displayName) || '?';
+  const avatarSwatch = avatarColors(displayName === '—' ? '' : displayName);
 
   const closeMenu = () => setMenuOpen(false);
 
@@ -78,17 +85,16 @@ export default function TopBar() {
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() => {
-            console.log('avatar tap');
-            setMenuOpen(true);
-          }}
+          onPress={() => setMenuOpen(true)}
           activeOpacity={0.7}
-          style={styles.avatar}
+          style={[styles.avatar, { backgroundColor: avatarSwatch.bg }]}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           accessibilityRole="button"
           accessibilityLabel="Account menu"
         >
-          <Text style={styles.avatarText}>{INITIALS}</Text>
+          <Text style={[styles.avatarText, { color: avatarSwatch.text }]}>
+            {initials}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -109,11 +115,13 @@ export default function TopBar() {
           >
             <View style={styles.menuHeader}>
               <Text style={styles.menuName} numberOfLines={1}>
-                {DISPLAY_NAME}
+                {displayName}
               </Text>
-              <Text style={styles.menuEmail} numberOfLines={1}>
-                {DISPLAY_EMAIL}
-              </Text>
+              {displayEmail ? (
+                <Text style={styles.menuEmail} numberOfLines={1}>
+                  {displayEmail}
+                </Text>
+              ) : null}
             </View>
 
             <MenuRow
@@ -212,12 +220,10 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: C.blue,
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarText: {
-    color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '800',
   },

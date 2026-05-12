@@ -3,6 +3,36 @@ export interface Paginated<T> {
   total_count: number;
 }
 
+/* ---------- Auth / Current user ---------- */
+
+/** GET /v1/auth/me → MeResponse (FastAPI) */
+export interface AccountInfo {
+  id: string;
+  company_name: string;
+  plan: string;
+  trial_ends_at: string | null;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+  phone_number: string | null;
+  city: string | null;
+  state: string | null;
+  account: AccountInfo;
+}
+
+/** POST /v1/auth/login → LoginResponse */
+export interface LoginResponse {
+  user_id: string;
+  access_token: string;
+  refresh_token: string;
+  role: string;
+}
+
 export type SubcontractorStatus = 'active' | 'inactive';
 
 export interface Subcontractor {
