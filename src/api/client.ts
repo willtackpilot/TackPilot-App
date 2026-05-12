@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { secureStore } from './secureStore';
 import { API_BASE_URL } from '../constants/theme';
 
 const REFRESH_PATH = '/v1/auth/refresh';
@@ -25,7 +25,7 @@ async function performRefresh(): Promise<string | null> {
 
   inflightRefresh = (async () => {
     try {
-      const refresh = await AsyncStorage.getItem(STORAGE_KEYS.refresh);
+      const refresh = await secureStore.getItem(STORAGE_KEYS.refresh);
       if (!refresh) return null;
 
       const res = await fetch(`${API_BASE_URL}${REFRESH_PATH}`, {
@@ -44,8 +44,8 @@ async function performRefresh(): Promise<string | null> {
       const newRefresh =
         (data as any)?.refresh_token ?? (data as any)?.refreshToken ?? null;
 
-      if (newAccess) await AsyncStorage.setItem(STORAGE_KEYS.jwt, newAccess);
-      if (newRefresh) await AsyncStorage.setItem(STORAGE_KEYS.refresh, newRefresh);
+      if (newAccess) await secureStore.setItem(STORAGE_KEYS.jwt, newAccess);
+      if (newRefresh) await secureStore.setItem(STORAGE_KEYS.refresh, newRefresh);
       return newAccess;
     } catch {
       return null;
@@ -58,7 +58,7 @@ async function performRefresh(): Promise<string | null> {
 }
 
 async function clearAuthAndSignal(): Promise<void> {
-  await AsyncStorage.multiRemove([STORAGE_KEYS.jwt, STORAGE_KEYS.refresh]);
+  await secureStore.multiRemove([STORAGE_KEYS.jwt, STORAGE_KEYS.refresh]);
   if (onAuthFailure) onAuthFailure();
 }
 
@@ -78,7 +78,7 @@ export async function apiRequest(
   path: string,
   options: RequestInit = {},
 ): Promise<Response> {
-  const token = await AsyncStorage.getItem(STORAGE_KEYS.jwt);
+  const token = await secureStore.getItem(STORAGE_KEYS.jwt);
   const headers = buildHeaders(options, token);
 
   let res = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });

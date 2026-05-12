@@ -191,7 +191,7 @@ function TabsNav() {
 }
 
 export default function AppNavigator() {
-  const { token, isLoading } = useAuth();
+  const { token, currentUser, isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -201,7 +201,10 @@ export default function AppNavigator() {
     );
   }
 
-  if (!token) {
+  // AuthGuard: both a verified token AND a loaded profile required for tabs.
+  // AuthContext rolls back the token if /me fails on bootstrap, so this is
+  // a belt-and-suspenders check.
+  if (!token || !currentUser) {
     return (
       <NavigationContainer>
         <LoginScreen />
