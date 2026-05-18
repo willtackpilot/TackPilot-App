@@ -5,6 +5,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
+import { CreateMenuProvider, navigationRef } from '../context/CreateMenuContext';
 import { C } from '../constants/theme';
 import TopBar from '../components/TopBar';
 import { useJobs } from '../hooks/useJobs';
@@ -17,10 +18,16 @@ import PeopleScreen from '../screens/PeopleScreen';
 import MoneyScreen from '../screens/MoneyScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import SettingsDetailScreen from '../screens/SettingsDetailScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 import ConnectorsScreen from '../screens/ConnectorsScreen';
 import CalendarScreen from '../screens/CalendarScreen';
 import ThreadsScreen from '../screens/ThreadsScreen';
 import ThreadDetailScreen, { ThreadDetailHeader } from '../screens/ThreadDetailScreen';
+import NewJobScreen from '../screens/NewJobScreen';
+import NewCrewScreen from '../screens/NewCrewScreen';
+import NewInvoiceScreen from '../screens/NewInvoiceScreen';
+import NewEventScreen from '../screens/NewEventScreen';
+import NotificationsScreen from '../screens/NotificationsScreen';
 import type {
   RootStackParamList,
   TabsParamList,
@@ -125,6 +132,7 @@ function SettingsStackNav() {
     <SettingsStack.Navigator screenOptions={stackScreenOptions}>
       <SettingsStack.Screen name="Settings" component={SettingsScreen} />
       <SettingsStack.Screen name="Connectors" component={ConnectorsScreen} />
+      <SettingsStack.Screen name="Profile" component={ProfileScreen} />
       <SettingsStack.Screen name="SettingsDetail" component={SettingsDetailScreen} />
     </SettingsStack.Navigator>
   );
@@ -201,24 +209,35 @@ export default function AppNavigator() {
     );
   }
 
-  // AuthGuard: both a verified token AND a loaded profile required for tabs.
-  // AuthContext rolls back the token if /me fails on bootstrap, so this is
-  // a belt-and-suspenders check.
   if (!token || !currentUser) {
     return (
-      <NavigationContainer>
+      <NavigationContainer ref={navigationRef}>
         <LoginScreen />
       </NavigationContainer>
     );
   }
 
   return (
-    <NavigationContainer>
-      <RootStack.Navigator screenOptions={{ headerShown: false }}>
-        <RootStack.Screen name="Tabs" component={TabsNav} />
-        <RootStack.Screen name="PeopleStack" component={PeopleStackNav} />
-        <RootStack.Screen name="SettingsStack" component={SettingsStackNav} />
-      </RootStack.Navigator>
+    <NavigationContainer ref={navigationRef}>
+      <CreateMenuProvider>
+        <RootStack.Navigator screenOptions={{ headerShown: false }}>
+          <RootStack.Screen name="Tabs" component={TabsNav} />
+          <RootStack.Screen name="PeopleStack" component={PeopleStackNav} />
+          <RootStack.Screen name="SettingsStack" component={SettingsStackNav} />
+          <RootStack.Group
+            screenOptions={{ presentation: 'modal', headerShown: false }}
+          >
+            <RootStack.Screen name="NewJob" component={NewJobScreen} />
+            <RootStack.Screen name="NewCrew" component={NewCrewScreen} />
+            <RootStack.Screen name="NewInvoice" component={NewInvoiceScreen} />
+            <RootStack.Screen name="NewEvent" component={NewEventScreen} />
+            <RootStack.Screen
+              name="Notifications"
+              component={NotificationsScreen}
+            />
+          </RootStack.Group>
+        </RootStack.Navigator>
+      </CreateMenuProvider>
     </NavigationContainer>
   );
 }

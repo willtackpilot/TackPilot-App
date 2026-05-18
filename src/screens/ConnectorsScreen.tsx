@@ -1,5 +1,12 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Linking,
+  StyleSheet,
+} from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { C } from '../constants/theme';
 
@@ -15,6 +22,8 @@ type Connector = {
   iconColor: string;
   iconBg: string;
 };
+
+const WEB_INTEGRATIONS_URL = 'https://app.tackpilot.com/settings/integrations';
 
 const CONNECTORS: Connector[] = [
   {
@@ -116,6 +125,10 @@ const CONNECTORS: Connector[] = [
 ];
 
 export default function ConnectorsScreen() {
+  const openOnWeb = () => {
+    void Linking.openURL(WEB_INTEGRATIONS_URL);
+  };
+
   return (
     <ScrollView
       style={styles.root}
@@ -133,17 +146,35 @@ export default function ConnectorsScreen() {
         </View>
         <Text style={styles.h2}>Connect the tools you already use.</Text>
         <Text style={styles.subtitle}>
-          TackPilot syncs data from your existing accounting, calendar, and CRM
-          tools. One-click connect via OAuth — no data leaves your account.
+          TackPilot syncs data from your accounting, calendar, and CRM tools.
+          One-click connect via OAuth — no data leaves your account.
         </Text>
       </View>
 
-      <View>
+      <TouchableOpacity
+        onPress={openOnWeb}
+        activeOpacity={0.85}
+        style={styles.banner}
+      >
+        <View style={styles.bannerIcon}>
+          <Ionicons name="open-outline" size={16} color={C.blue} />
+        </View>
+        <View style={styles.bannerText}>
+          <Text style={styles.bannerTitle}>Manage on the web</Text>
+          <Text style={styles.bannerBody}>
+            Connecting new tools needs OAuth — open the dashboard to authorize.
+          </Text>
+        </View>
+        <Ionicons name="chevron-forward" size={18} color={C.blue} />
+      </TouchableOpacity>
+
+      <View style={styles.section}>
         {CONNECTORS.map((c, idx) => (
           <ConnectorRow
             key={c.id}
             connector={c}
             isLast={idx === CONNECTORS.length - 1}
+            onTap={openOnWeb}
           />
         ))}
       </View>
@@ -154,19 +185,20 @@ export default function ConnectorsScreen() {
 function ConnectorRow({
   connector,
   isLast,
+  onTap,
 }: {
   connector: Connector;
   isLast: boolean;
+  onTap: () => void;
 }) {
   const connected = connector.status === 'connected';
   return (
-    <View style={[styles.row, !isLast && styles.rowBorder]}>
-      <View
-        style={[
-          styles.iconTile,
-          { backgroundColor: connector.iconBg },
-        ]}
-      >
+    <TouchableOpacity
+      onPress={onTap}
+      activeOpacity={0.6}
+      style={[styles.row, !isLast && styles.rowBorder]}
+    >
+      <View style={[styles.iconTile, { backgroundColor: connector.iconBg }]}>
         <Text style={[styles.iconLetter, { color: connector.iconColor }]}>
           {connector.iconLetter}
         </Text>
@@ -177,12 +209,6 @@ function ConnectorRow({
           <Text style={styles.name} numberOfLines={1}>
             {connector.name}
           </Text>
-          {connected ? (
-            <View style={styles.inlineConnected}>
-              <Ionicons name="checkmark" size={11} color={C.green} />
-              <Text style={styles.inlineConnectedText}>Connected</Text>
-            </View>
-          ) : null}
           <Text style={styles.category} numberOfLines={1}>
             · {connector.category}
           </Text>
@@ -193,11 +219,14 @@ function ConnectorRow({
       <View style={styles.rightCol}>
         {connected ? (
           <View style={styles.statusPill}>
+            <Ionicons name="checkmark" size={11} color={C.green} />
             <Text style={styles.statusPillText}>Connected</Text>
           </View>
-        ) : null}
+        ) : (
+          <Text style={styles.connectLink}>Connect →</Text>
+        )}
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -238,6 +267,43 @@ const styles = StyleSheet.create({
     marginTop: 8,
     lineHeight: 18,
   },
+  banner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 14,
+    backgroundColor: C.blueSoft,
+    borderRadius: 14,
+    marginBottom: 16,
+  },
+  bannerIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: C.canvas,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bannerText: {
+    flex: 1,
+  },
+  bannerTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: C.blueDeep,
+  },
+  bannerBody: {
+    fontSize: 12,
+    color: C.ink2,
+    marginTop: 2,
+  },
+  section: {
+    backgroundColor: C.canvas,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: C.sep,
+    paddingHorizontal: 14,
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -251,7 +317,7 @@ const styles = StyleSheet.create({
   iconTile: {
     width: 40,
     height: 40,
-    borderRadius: 8,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -274,16 +340,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: C.ink,
   },
-  inlineConnected: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-  },
-  inlineConnectedText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: C.green,
-  },
   category: {
     fontSize: 11,
     color: C.faded,
@@ -295,10 +351,12 @@ const styles = StyleSheet.create({
     lineHeight: 17,
   },
   rightCol: {
-    minWidth: 60,
     alignItems: 'flex-end',
   },
   statusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
     backgroundColor: C.greenSoft,
     paddingHorizontal: 8,
     paddingVertical: 3,
@@ -308,5 +366,10 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     color: C.green,
+  },
+  connectLink: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: C.blue,
   },
 });

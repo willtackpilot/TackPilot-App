@@ -242,6 +242,79 @@ export interface FinancesPageResponse {
   health_summary?: HealthSummary;
 }
 
+/* ---------- Create payloads ---------- */
+
+export interface JobCreate {
+  title: string;
+  description?: string | null;
+  address?: string | null;
+  city?: string | null;
+  phone?: string | null;
+  status?: WorkStatus;
+  planned_start_time?: string | null;
+  planned_end_time?: string | null;
+}
+
+export interface SubcontractorCreate {
+  full_name: string;
+  phone_number?: string | null;
+  role?: string;
+  email?: string | null;
+  trade?: string | null;
+  company_name?: string | null;
+}
+
+export interface InvoiceCreate {
+  customer_name: string;
+  customer_phone?: string | null;
+  customer_email?: string | null;
+  amount: number;
+  description?: string | null;
+  linked_job_id?: string | null;
+  due_date?: string | null;
+}
+
+export interface CalendarEventCreate {
+  title: string;
+  start: string;
+  end: string;
+  location?: string | null;
+  linked_job_id?: string | null;
+  notes?: string | null;
+}
+
+export interface UserUpdate {
+  first_name?: string | null;
+  last_name?: string | null;
+  phone_number?: string | null;
+  email?: string | null;
+  city?: string | null;
+  state?: string | null;
+}
+
+/* ---------- Notifications ---------- */
+
+export type NotificationType = string;
+
+export interface NotificationItem {
+  id: string;
+  account_id: string;
+  job_id: string | null;
+  task_id: string | null;
+  subcontractor_contact_id: string | null;
+  message_log_id: string | null;
+  task_alert_id: string | null;
+  type: NotificationType;
+  text: string;
+  is_read: boolean;
+  create_time: string;
+}
+
+export interface NotificationListResponse {
+  items: NotificationItem[];
+  total_count: number;
+}
+
 export interface DashboardResponse {
   active_projects: number;
   due_today: number;

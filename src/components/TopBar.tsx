@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { C } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
 import { useCurrentUser } from '../hooks/useCurrentUser';
+import { useNotifications } from '../hooks/useNotifications';
 import { avatarColors } from '../utils/avatar';
 import { initialsOf } from '../utils/time';
 import type { RootStackParamList } from '../navigation/types';
@@ -30,6 +31,7 @@ export default function TopBar() {
   const insets = useSafeAreaInsets();
   const { signOut } = useAuth();
   const { user } = useCurrentUser();
+  const { unreadCount } = useNotifications({ limit: 30 });
 
   const displayName = user
     ? `${user.first_name} ${user.last_name}`.trim()
@@ -74,14 +76,25 @@ export default function TopBar() {
 
       <View style={styles.right}>
         <TouchableOpacity
-          onPress={() => console.log('bell tap')}
+          onPress={() => nav.navigate('Notifications')}
           activeOpacity={0.6}
           style={styles.iconBtn}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           accessibilityRole="button"
-          accessibilityLabel="Notifications"
+          accessibilityLabel={
+            unreadCount > 0
+              ? `Notifications, ${unreadCount} unread`
+              : 'Notifications'
+          }
         >
           <Ionicons name="notifications-outline" size={20} color={C.ink2} />
+          {unreadCount > 0 ? (
+            <View style={styles.bellDot}>
+              <Text style={styles.bellDotText}>
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </Text>
+            </View>
+          ) : null}
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -215,6 +228,23 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  bellDot: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    minWidth: 14,
+    height: 14,
+    paddingHorizontal: 3,
+    borderRadius: 7,
+    backgroundColor: C.red,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bellDotText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#FFFFFF',
   },
   avatar: {
     width: 32,

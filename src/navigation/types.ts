@@ -26,6 +26,7 @@ export type PeopleStackParamList = {
 export type SettingsStackParamList = {
   Settings: undefined;
   Connectors: undefined;
+  Profile: undefined;
   SettingsDetail: { id: string; label: string };
 };
 
@@ -41,4 +42,9 @@ export type RootStackParamList = {
   Tabs: undefined;
   PeopleStack: undefined;
   SettingsStack: undefined;
+  Notifications: undefined;
+  NewJob: undefined;
+  NewCrew: undefined;
+  NewInvoice: undefined;
+  NewEvent: undefined;
 };

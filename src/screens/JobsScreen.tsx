@@ -1,17 +1,21 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  RefreshControl,
   StyleSheet,
 } from 'react-native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { NavigationProp } from '@react-navigation/native';
 import { C } from '../constants/theme';
 import EmptyState from '../components/EmptyState';
 import FAB from '../components/FAB';
 import { useJobs } from '../hooks/useJobs';
 import type { Job, WorkStatus } from '../api/types';
+import type { RootStackParamList } from '../navigation/types';
 
 type Filter = 'all' | 'active' | 'pending' | 'completed';
 
@@ -33,7 +37,14 @@ function inBucket(status: WorkStatus, filter: Filter): boolean {
 
 export default function JobsScreen() {
   const [filter, setFilter] = useState<Filter>('all');
-  const { jobs, totalCount, loading } = useJobs();
+  const { jobs, totalCount, loading, refetch } = useJobs();
+  const nav = useNavigation<NavigationProp<RootStackParamList>>();
+
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch]),
+  );
 
   const filtered = jobs.filter((j) => inBucket(j.status, filter));
   const openCount = jobs.filter(
@@ -60,6 +71,9 @@ export default function JobsScreen() {
       style={styles.scroll}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={loading} onRefresh={refetch} tintColor={C.muted} />
+      }
     >
       <View style={styles.header}>
         <Text style={styles.h1}>Jobs</Text>
@@ -107,7 +121,7 @@ export default function JobsScreen() {
         )}
       </View>
     </ScrollView>
-    <FAB />
+    <FAB onPress={() => nav.navigate('NewJob')} accessibilityLabel="New job" />
     </View>
   );
 }
