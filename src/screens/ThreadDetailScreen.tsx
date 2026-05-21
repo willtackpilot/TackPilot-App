@@ -18,6 +18,7 @@ import { useHeaderHeight } from '@react-navigation/elements';
 import { C } from '../constants/theme';
 import EmptyState from '../components/EmptyState';
 import { useThreadMessages } from '../hooks/useThreadMessages';
+import { usePolling } from '../hooks/usePolling';
 import { initialsOf, relTime } from '../utils/time';
 import { avatarColors } from '../utils/avatar';
 import type { SubcontractorSMSResponse } from '../api/types';
@@ -33,11 +34,18 @@ export default function ThreadDetailScreen() {
   const {
     messages,
     loading,
+    refetch,
     sendMessage,
     sending,
     sendError,
     clearSendError,
   } = useThreadMessages(subId);
+
+  // Poll fast while in the conversation so replies land within ~15s.
+  // The refetch is paused automatically when the app backgrounds, when
+  // this screen unmounts, and while a send is in flight (so the
+  // optimistic bubble doesn't get wiped by a mid-send refetch).
+  usePolling(refetch, 15_000, !sending);
 
   const [draft, setDraft] = useState('');
   const scrollRef = useRef<ScrollView>(null);

@@ -11,6 +11,7 @@ import TopBar from '../components/TopBar';
 import { useJobs } from '../hooks/useJobs';
 import { useFinances } from '../hooks/useFinances';
 import { useThreadList } from '../hooks/useThreadList';
+import { usePolling } from '../hooks/usePolling';
 import LoginScreen from '../screens/LoginScreen';
 import TodayScreen from '../screens/TodayScreen';
 import JobsScreen from '../screens/JobsScreen';
@@ -144,7 +145,11 @@ function TabsNav() {
   // see docs/TECH_DEBT.md.
   const { jobs } = useJobs();
   const { data: finances } = useFinances();
-  const { totalUnread } = useThreadList();
+  const { totalUnread, refetch: refetchThreads } = useThreadList();
+
+  // Foreground poll so the Threads tab badge picks up inbound texts
+  // without the user having to refocus the tab. Mirrors the bell.
+  usePolling(refetchThreads, 60_000);
 
   const jobsActive = jobs.filter((j) => j.status === 'in_progress').length;
   const overdueCount = finances?.health_summary?.overdue_count ?? 0;

@@ -16,6 +16,7 @@ import { C } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
 import { useCurrentUser } from '../hooks/useCurrentUser';
 import { useNotifications } from '../hooks/useNotifications';
+import { usePolling } from '../hooks/usePolling';
 import { avatarColors } from '../utils/avatar';
 import { initialsOf } from '../utils/time';
 import type { RootStackParamList } from '../navigation/types';
@@ -31,7 +32,11 @@ export default function TopBar() {
   const insets = useSafeAreaInsets();
   const { signOut } = useAuth();
   const { user } = useCurrentUser();
-  const { unreadCount } = useNotifications({ limit: 30 });
+  const { unreadCount, refetch: refetchNotifications } = useNotifications({ limit: 30 });
+
+  // Foreground poll so the bell badge updates within ~60s of an inbound
+  // text or any other notification — without push.
+  usePolling(refetchNotifications, 60_000);
 
   const displayName = user
     ? `${user.first_name} ${user.last_name}`.trim()
