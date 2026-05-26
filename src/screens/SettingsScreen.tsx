@@ -40,21 +40,21 @@ const ROWS: Row[] = [
     label: 'Agents',
     subtitle: 'TackPilot rules and personas',
     icon: 'sparkles-outline',
-    ready: false,
+    ready: true,
   },
   {
     id: 'channels',
     label: 'Channels',
     subtitle: 'SMS, email, and voice routing',
     icon: 'megaphone-outline',
-    ready: false,
+    ready: true,
   },
   {
     id: 'billing',
     label: 'Billing',
     subtitle: 'Plan and invoices',
     icon: 'card-outline',
-    ready: false,
+    ready: true,
   },
   {
     id: 'team',
@@ -77,6 +77,9 @@ export default function SettingsScreen() {
   const goTo = (row: Row) => {
     if (row.id === 'profile') nav.navigate('Profile');
     else if (row.id === 'connectors') nav.navigate('Connectors');
+    else if (row.id === 'agents') nav.navigate('Agents');
+    else if (row.id === 'channels') nav.navigate('Channels');
+    else if (row.id === 'billing') nav.navigate('Billing');
     else nav.navigate('SettingsDetail', { id: row.id, label: row.label });
   };
 

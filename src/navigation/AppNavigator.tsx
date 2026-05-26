@@ -21,9 +21,13 @@ import SettingsScreen from '../screens/SettingsScreen';
 import SettingsDetailScreen from '../screens/SettingsDetailScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import ConnectorsScreen from '../screens/ConnectorsScreen';
+import AgentsScreen from '../screens/AgentsScreen';
+import ChannelsScreen from '../screens/ChannelsScreen';
+import BillingScreen from '../screens/BillingScreen';
 import CalendarScreen from '../screens/CalendarScreen';
 import ThreadsScreen from '../screens/ThreadsScreen';
 import ThreadDetailScreen, { ThreadDetailHeader } from '../screens/ThreadDetailScreen';
+import JobDetailScreen, { JobDetailHeader } from '../screens/JobDetailScreen';
 import NewJobScreen from '../screens/NewJobScreen';
 import NewCrewScreen from '../screens/NewCrewScreen';
 import NewInvoiceScreen from '../screens/NewInvoiceScreen';
@@ -87,6 +91,11 @@ function JobsStackNav() {
   return (
     <JobsStack.Navigator screenOptions={stackScreenOptions}>
       <JobsStack.Screen name="Jobs" component={JobsScreen} />
+      <JobsStack.Screen
+        name="JobDetail"
+        component={JobDetailScreen}
+        options={{ header: () => <JobDetailHeader /> }}
+      />
     </JobsStack.Navigator>
   );
 }
@@ -134,6 +143,9 @@ function SettingsStackNav() {
       <SettingsStack.Screen name="Settings" component={SettingsScreen} />
       <SettingsStack.Screen name="Connectors" component={ConnectorsScreen} />
       <SettingsStack.Screen name="Profile" component={ProfileScreen} />
+      <SettingsStack.Screen name="Agents" component={AgentsScreen} />
+      <SettingsStack.Screen name="Channels" component={ChannelsScreen} />
+      <SettingsStack.Screen name="Billing" component={BillingScreen} />
       <SettingsStack.Screen name="SettingsDetail" component={SettingsDetailScreen} />
     </SettingsStack.Navigator>
   );

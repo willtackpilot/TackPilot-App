@@ -333,3 +333,135 @@ export interface DashboardResponse {
   weather_data: Record<string, unknown>;
   empty_state_message: string | null;
 }
+
+/* ---------- Job Detail ---------- */
+
+export type TaskPriority = 'critical' | 'flexible';
+
+export interface TaskItem {
+  id: string;
+  title: string;
+  description: string | null;
+  status: WorkStatus;
+  priority: TaskPriority;
+  order: number;
+  estimated_hours: number | null;
+  planned_start_time: string | null;
+  planned_end_time: string | null;
+  assigned_to: string | null;
+}
+
+export interface TaskListResponse {
+  items: TaskItem[];
+  total_count: number;
+}
+
+export interface JobDetail {
+  id: string;
+  account_id: string;
+  title: string;
+  description: string | null;
+  address: string | null;
+  city: string | null;
+  phone: string | null;
+  status: WorkStatus;
+  planned_start_time: string | null;
+  planned_end_time: string | null;
+  progress: number;
+  tasks_total: number;
+  tasks_done: number;
+  overdue: boolean;
+  create_time: string;
+  update_time: string;
+}
+
+/* ---------- Integrations ---------- */
+
+export interface IntegrationStatus {
+  [key: string]: unknown;
+}
+
+/* ---------- Agents ---------- */
+
+export interface AgentStatus {
+  agent_slug: string;
+  last_run_at: string | null;
+  last_run_status: string | null;
+  last_run_summary: string | null;
+  runs_last_7d: number;
+}
+
+export interface AgentStatusResponse {
+  agents: AgentStatus[];
+}
+
+/* ---------- Billing ---------- */
+
+export interface SubscriptionStatus {
+  has_active_subscription: boolean;
+  is_trial: boolean;
+  is_active: boolean;
+  trial_days_remaining: number;
+  subscription_id: string | null;
+  status: string | null;
+  current_period_end: string | null;
+}
+
+/* ---------- Account ---------- */
+
+export interface AccountSettings {
+  id: string;
+  business_name: string;
+  google_review_url: string | null;
+  twilio_phone_number: string | null;
+  trade_package: string | null;
+}
+
+/* ---------- Notification Preferences ---------- */
+
+export interface NotificationPrefs {
+  sms_enabled: boolean;
+  email_enabled: boolean;
+  daily_summary: boolean;
+  weekly_scorecard: boolean;
+  reminders: boolean;
+  eod_prompt: boolean;
+  dispatch_alerts: boolean;
+  collections_alerts: boolean;
+  review_requests: boolean;
+  agent_actions: boolean;
+}
+
+/* ---------- Estimates ---------- */
+
+export interface EstimateListItem {
+  id: string;
+  job_id: string | null;
+  status: string;
+  total_cents: number;
+  line_item_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/* ---------- Proposals ---------- */
+
+export interface ProposalListItem {
+  id: string;
+  job_id: string | null;
+  title: string;
+  client_name: string;
+  status: string;
+  total_cents: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/* ---------- Capital ---------- */
+
+export interface CapitalSnapshot {
+  recorded_at: string;
+  score: number;
+  confidence: string;
+  borrowing_power_usd: number;
+}
