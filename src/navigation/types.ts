@@ -31,6 +31,7 @@ export type SettingsStackParamList = {
   Agents: undefined;
   Channels: undefined;
   Billing: undefined;
+  Team: undefined;
   SettingsDetail: { id: string; label: string };
 };
 
@@ -47,6 +48,7 @@ export type RootStackParamList = {
   PeopleStack: undefined;
   SettingsStack: undefined;
   Notifications: undefined;
+  AIChat: undefined;
   NewJob: undefined;
   NewCrew: undefined;
   NewInvoice: undefined;

@@ -61,7 +61,7 @@ const ROWS: Row[] = [
     label: 'Team',
     subtitle: 'Invite teammates',
     icon: 'people-outline',
-    ready: false,
+    ready: true,
   },
 ];
 
@@ -80,6 +80,7 @@ export default function SettingsScreen() {
     else if (row.id === 'agents') nav.navigate('Agents');
     else if (row.id === 'channels') nav.navigate('Channels');
     else if (row.id === 'billing') nav.navigate('Billing');
+    else if (row.id === 'team') nav.navigate('Team');
     else nav.navigate('SettingsDetail', { id: row.id, label: row.label });
   };
 

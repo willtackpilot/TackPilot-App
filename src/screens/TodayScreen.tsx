@@ -15,6 +15,7 @@ import EmptyState from '../components/EmptyState';
 import { useDashboard } from '../hooks/useDashboard';
 import { useThreadList } from '../hooks/useThreadList';
 import { useAuth } from '../context/AuthContext';
+import { apiPost } from '../api/client';
 import { initialsOf, relTime } from '../utils/time';
 import { avatarColors } from '../utils/avatar';
 import FAB from '../components/FAB';

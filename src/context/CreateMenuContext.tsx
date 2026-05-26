@@ -54,6 +54,13 @@ export function CreateMenuProvider({ children }: { children: React.ReactNode }) 
       subtitle: 'Bill a customer',
       onPress: () => navigate('NewInvoice'),
     },
+    {
+      key: 'chat',
+      icon: 'sparkles-outline',
+      label: 'Ask TackPilot',
+      subtitle: 'AI assistant for anything',
+      onPress: () => navigate('AIChat'),
+    },
   ];
 
   const open = useCallback((custom?: ActionSheetItem[]) => {

@@ -15,7 +15,7 @@ import type { NavigationProp } from '@react-navigation/native';
 import { C, money } from '../constants/theme';
 import EmptyState from '../components/EmptyState';
 import FAB from '../components/FAB';
-import { apiGet } from '../api/client';
+import { apiGet, apiPost, apiPatch } from '../api/client';
 import type {
   JobDetail,
   TaskItem,
@@ -24,6 +24,7 @@ import type {
   WorkStatus,
   TaskPriority,
 } from '../api/types';
+import { FormInput, PrimaryButton } from '../components/Form';
 import type { RootStackParamList } from '../navigation/types';
 
 /* ---------- Route typing ---------- */
@@ -209,10 +210,19 @@ export default function JobDetailScreen() {
           ) : (
             <View style={styles.card}>
               {tasks.map((t, idx) => (
-                <TaskRow key={t.id} task={t} isLast={idx === tasks.length - 1} />
+                <TaskRow
+                  key={t.id}
+                  task={t}
+                  isLast={idx === tasks.length - 1}
+                  onComplete={async () => {
+                    await apiPost(`/v1/job/task/${t.id}/complete`);
+                    fetchAll();
+                  }}
+                />
               ))}
             </View>
           )}
+          <AddTaskInline jobId={jobId} onAdded={fetchAll} />
         </View>
 
         {/* ── Estimates section ── */}
@@ -241,15 +251,39 @@ export default function JobDetailScreen() {
 
 /* ---------- Task row ---------- */
 
-function TaskRow({ task, isLast }: { task: TaskItem; isLast: boolean }) {
+function TaskRow({
+  task,
+  isLast,
+  onComplete,
+}: {
+  task: TaskItem;
+  isLast: boolean;
+  onComplete: () => void;
+}) {
   const meta = STATUS_META[task.status];
   const isCritical = task.priority === 'critical';
+  const isDone = task.status === 'completed';
 
   return (
     <View style={[styles.row, !isLast && styles.rowBorder]}>
+      <TouchableOpacity
+        onPress={isDone ? undefined : onComplete}
+        disabled={isDone}
+        activeOpacity={0.6}
+        style={styles.checkCircle}
+      >
+        <Ionicons
+          name={isDone ? 'checkmark-circle' : 'ellipse-outline'}
+          size={22}
+          color={isDone ? C.green : C.faded}
+        />
+      </TouchableOpacity>
       <View style={styles.rowBody}>
         <View style={styles.taskTitleLine}>
-          <Text style={styles.rowTitle} numberOfLines={1}>
+          <Text
+            style={[styles.rowTitle, isDone && styles.rowTitleDone]}
+            numberOfLines={1}
+          >
             {task.title}
           </Text>
           {isCritical ? (
@@ -266,6 +300,67 @@ function TaskRow({ task, isLast }: { task: TaskItem; isLast: boolean }) {
       </View>
       <View style={[styles.statusPill, { backgroundColor: pillBg(meta.fg) }]}>
         <Text style={[styles.statusPillText, { color: meta.fg }]}>{meta.label}</Text>
+      </View>
+    </View>
+  );
+}
+
+function AddTaskInline({
+  jobId,
+  onAdded,
+}: {
+  jobId: string;
+  onAdded: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const submit = async () => {
+    const trimmed = title.trim();
+    if (!trimmed) return;
+    setSaving(true);
+    try {
+      await apiPost(`/v1/job/${jobId}/task/create`, { title: trimmed });
+      setTitle('');
+      setOpen(false);
+      onAdded();
+    } catch {
+      // keep form open so user can retry
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!open) {
+    return (
+      <TouchableOpacity
+        onPress={() => setOpen(true)}
+        activeOpacity={0.6}
+        style={styles.addTaskBtn}
+      >
+        <Ionicons name="add-circle-outline" size={18} color={C.blue} />
+        <Text style={styles.addTaskText}>Add task</Text>
+      </TouchableOpacity>
+    );
+  }
+
+  return (
+    <View style={styles.addTaskForm}>
+      <FormInput
+        value={title}
+        onChangeText={setTitle}
+        placeholder="Task title"
+        autoFocus
+        maxLength={500}
+        editable={!saving}
+        onSubmitEditing={submit}
+      />
+      <View style={styles.addTaskActions}>
+        <PrimaryButton label="Save" onPress={submit} loading={saving} disabled={!title.trim()} />
+        <TouchableOpacity onPress={() => { setOpen(false); setTitle(''); }} style={styles.addTaskCancel}>
+          <Text style={styles.addTaskCancelText}>Cancel</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -493,6 +588,48 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#8A2A1F',
     letterSpacing: 0.6,
+  },
+
+  /* Task completion */
+  checkCircle: {
+    width: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  rowTitleDone: {
+    textDecorationLine: 'line-through',
+    color: C.faded,
+  },
+
+  /* Add task */
+  addTaskBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 12,
+  },
+  addTaskText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: C.blue,
+  },
+  addTaskForm: {
+    marginTop: 8,
+    gap: 10,
+  },
+  addTaskActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  addTaskCancel: {
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+  },
+  addTaskCancelText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: C.muted,
   },
 
   /* Header */

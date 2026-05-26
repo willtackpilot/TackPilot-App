@@ -28,6 +28,8 @@ import CalendarScreen from '../screens/CalendarScreen';
 import ThreadsScreen from '../screens/ThreadsScreen';
 import ThreadDetailScreen, { ThreadDetailHeader } from '../screens/ThreadDetailScreen';
 import JobDetailScreen, { JobDetailHeader } from '../screens/JobDetailScreen';
+import TeamScreen from '../screens/TeamScreen';
+import AIChatScreen, { AIChatHeader } from '../screens/AIChatScreen';
 import NewJobScreen from '../screens/NewJobScreen';
 import NewCrewScreen from '../screens/NewCrewScreen';
 import NewInvoiceScreen from '../screens/NewInvoiceScreen';
@@ -146,6 +148,7 @@ function SettingsStackNav() {
       <SettingsStack.Screen name="Agents" component={AgentsScreen} />
       <SettingsStack.Screen name="Channels" component={ChannelsScreen} />
       <SettingsStack.Screen name="Billing" component={BillingScreen} />
+      <SettingsStack.Screen name="Team" component={TeamScreen} />
       <SettingsStack.Screen name="SettingsDetail" component={SettingsDetailScreen} />
     </SettingsStack.Navigator>
   );
@@ -244,6 +247,11 @@ export default function AppNavigator() {
           <RootStack.Group
             screenOptions={{ presentation: 'modal', headerShown: false }}
           >
+            <RootStack.Screen
+              name="AIChat"
+              component={AIChatScreen}
+              options={{ header: () => <AIChatHeader /> }}
+            />
             <RootStack.Screen name="NewJob" component={NewJobScreen} />
             <RootStack.Screen name="NewCrew" component={NewCrewScreen} />
             <RootStack.Screen name="NewInvoice" component={NewInvoiceScreen} />

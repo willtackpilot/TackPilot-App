@@ -81,6 +81,17 @@ export default function TopBar() {
 
       <View style={styles.right}>
         <TouchableOpacity
+          onPress={() => nav.navigate('AIChat')}
+          activeOpacity={0.6}
+          style={styles.iconBtn}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityRole="button"
+          accessibilityLabel="Ask TackPilot AI"
+        >
+          <Ionicons name="sparkles-outline" size={20} color={C.ink2} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
           onPress={() => nav.navigate('Notifications')}
           activeOpacity={0.6}
           style={styles.iconBtn}
