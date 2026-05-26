@@ -1,17 +1,22 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  RefreshControl,
   StyleSheet,
 } from 'react-native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { NavigationProp } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { C } from '../constants/theme';
 import EmptyState from '../components/EmptyState';
 import FAB from '../components/FAB';
 import { useJobs } from '../hooks/useJobs';
 import type { Job, WorkStatus } from '../api/types';
+import type { RootStackParamList, JobsStackParamList } from '../navigation/types';
 
 type Filter = 'all' | 'active' | 'pending' | 'completed';
 
@@ -33,7 +38,15 @@ function inBucket(status: WorkStatus, filter: Filter): boolean {
 
 export default function JobsScreen() {
   const [filter, setFilter] = useState<Filter>('all');
-  const { jobs, totalCount, loading } = useJobs();
+  const { jobs, totalCount, loading, refetch } = useJobs();
+  const rootNav = useNavigation<NavigationProp<RootStackParamList>>();
+  const nav = useNavigation<NativeStackNavigationProp<JobsStackParamList>>();
+
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch]),
+  );
 
   const filtered = jobs.filter((j) => inBucket(j.status, filter));
   const openCount = jobs.filter(
@@ -60,6 +73,9 @@ export default function JobsScreen() {
       style={styles.scroll}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={loading} onRefresh={refetch} tintColor={C.muted} />
+      }
     >
       <View style={styles.header}>
         <Text style={styles.h1}>Jobs</Text>
@@ -102,17 +118,22 @@ export default function JobsScreen() {
           />
         ) : (
           filtered.map((j, idx) => (
-            <JobRow key={j.id} job={j} isLast={idx === filtered.length - 1} />
+            <JobRow
+              key={j.id}
+              job={j}
+              isLast={idx === filtered.length - 1}
+              onPress={() => nav.navigate('JobDetail', { jobId: j.id, title: j.title })}
+            />
           ))
         )}
       </View>
     </ScrollView>
-    <FAB />
+    <FAB onPress={() => rootNav.navigate('NewJob')} accessibilityLabel="New job" />
     </View>
   );
 }
 
-function JobRow({ job, isLast }: { job: Job; isLast: boolean }) {
+function JobRow({ job, isLast, onPress }: { job: Job; isLast: boolean; onPress: () => void }) {
   const meta = STATUS_META[job.status];
   const subParts = [job.subcontractors_name, job.address].filter(Boolean);
   const subtitle = subParts.length > 0 ? subParts.join(' · ') : '—';
@@ -120,7 +141,11 @@ function JobRow({ job, isLast }: { job: Job; isLast: boolean }) {
     job.tasks_total > 0 ? `${job.tasks_done}/${job.tasks_total} tasks` : null;
 
   return (
-    <View style={[styles.row, !isLast && styles.rowBorder]}>
+    <TouchableOpacity
+      activeOpacity={0.6}
+      onPress={onPress}
+      style={[styles.row, !isLast && styles.rowBorder]}
+    >
       <View style={[styles.dot, { backgroundColor: meta.fg }]} />
       <View style={styles.rowText}>
         <View style={styles.titleLine}>
@@ -145,7 +170,7 @@ function JobRow({ job, isLast }: { job: Job; isLast: boolean }) {
           <Text style={styles.progress}>{progress}</Text>
         ) : null}
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 

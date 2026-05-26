@@ -1,5 +1,14 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  RefreshControl,
+  StyleSheet,
+} from 'react-native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { NavigationProp } from '@react-navigation/native';
 import { C, money } from '../constants/theme';
 import SectionHeader from '../components/SectionHeader';
 import EmptyState from '../components/EmptyState';
@@ -7,7 +16,9 @@ import FAB from '../components/FAB';
 import Sparkline from '../components/Sparkline';
 import { useFinances } from '../hooks/useFinances';
 import { useDashboard } from '../hooks/useDashboard';
-import type { InvoiceItem } from '../api/types';
+import { apiGet } from '../api/client';
+import type { InvoiceItem, ProposalListItem } from '../api/types';
+import type { RootStackParamList } from '../navigation/types';
 
 type InvoiceTab = 'all' | 'overdue' | 'open';
 
@@ -40,9 +51,29 @@ function dueLabel(iv: InvoiceItem): string {
 
 export default function MoneyScreen() {
   const [tab, setTab] = useState<InvoiceTab>('all');
-  const { data } = useFinances();
-  const { data: dashboard } = useDashboard();
+  const { data, loading, refetch } = useFinances();
+  const { data: dashboard, refetch: refetchDashboard } = useDashboard();
+  const nav = useNavigation<NavigationProp<RootStackParamList>>();
   const revenueSeries = (dashboard?.revenue_last_30_days ?? []).map((d) => d.amount);
+
+  const [proposals, setProposals] = useState<ProposalListItem[]>([]);
+  useEffect(() => {
+    apiGet<{ items: ProposalListItem[] }>('/v1/proposals?limit=10')
+      .then((r) => setProposals(r.items ?? []))
+      .catch(() => {});
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+      refetchDashboard();
+    }, [refetch, refetchDashboard]),
+  );
+
+  const onRefresh = useCallback(() => {
+    refetch();
+    refetchDashboard();
+  }, [refetch, refetchDashboard]);
 
   const invoices = data?.open_invoices?.invoices ?? [];
   const quickbooksConnected = data?.open_invoices?.quickbooks_connected ?? false;
@@ -72,6 +103,9 @@ export default function MoneyScreen() {
       style={styles.scroll}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={loading} onRefresh={onRefresh} tintColor={C.muted} />
+      }
     >
       <View style={styles.header}>
         <Text style={styles.h1}>Money</Text>
@@ -96,11 +130,34 @@ export default function MoneyScreen() {
       </View>
 
       <View style={styles.section}>
-        <SectionHeader title="What's coming in" />
-        <EmptyState
-          variant="card"
-          message="Estimates coming soon. Track quotes from draft to signed once the Estimate model ships."
-        />
+        <SectionHeader title="What's coming in" meta={`${proposals.length} proposals`} />
+        {proposals.length === 0 ? (
+          <EmptyState
+            message="No proposals yet. Create one from a job to start tracking quotes."
+          />
+        ) : (
+          proposals.map((p, idx) => (
+            <View
+              key={p.id}
+              style={[styles.invoiceRow, idx < proposals.length - 1 && styles.invoiceRowBorder]}
+            >
+              <View style={styles.invoiceMain}>
+                <Text style={styles.invoiceClient} numberOfLines={1}>
+                  {p.client_name}
+                </Text>
+                <Text style={styles.invoiceDesc} numberOfLines={1}>
+                  {p.title}
+                </Text>
+              </View>
+              <View style={styles.invoiceMeta}>
+                <Text style={styles.invoiceDue}>{p.status}</Text>
+                <Text style={styles.invoiceAmount}>
+                  {money(p.total_cents / 100)}
+                </Text>
+              </View>
+            </View>
+          ))
+        )}
       </View>
 
       <View style={styles.section}>
@@ -143,7 +200,7 @@ export default function MoneyScreen() {
         )}
       </View>
     </ScrollView>
-    <FAB />
+    <FAB onPress={() => nav.navigate('NewInvoice')} accessibilityLabel="New invoice" />
     </View>
   );
 }

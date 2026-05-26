@@ -5,11 +5,13 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
+import { CreateMenuProvider, navigationRef } from '../context/CreateMenuContext';
 import { C } from '../constants/theme';
 import TopBar from '../components/TopBar';
 import { useJobs } from '../hooks/useJobs';
 import { useFinances } from '../hooks/useFinances';
 import { useThreadList } from '../hooks/useThreadList';
+import { usePolling } from '../hooks/usePolling';
 import LoginScreen from '../screens/LoginScreen';
 import TodayScreen from '../screens/TodayScreen';
 import JobsScreen from '../screens/JobsScreen';
@@ -17,10 +19,22 @@ import PeopleScreen from '../screens/PeopleScreen';
 import MoneyScreen from '../screens/MoneyScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import SettingsDetailScreen from '../screens/SettingsDetailScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 import ConnectorsScreen from '../screens/ConnectorsScreen';
+import AgentsScreen from '../screens/AgentsScreen';
+import ChannelsScreen from '../screens/ChannelsScreen';
+import BillingScreen from '../screens/BillingScreen';
 import CalendarScreen from '../screens/CalendarScreen';
 import ThreadsScreen from '../screens/ThreadsScreen';
 import ThreadDetailScreen, { ThreadDetailHeader } from '../screens/ThreadDetailScreen';
+import JobDetailScreen, { JobDetailHeader } from '../screens/JobDetailScreen';
+import TeamScreen from '../screens/TeamScreen';
+import AIChatScreen, { AIChatHeader } from '../screens/AIChatScreen';
+import NewJobScreen from '../screens/NewJobScreen';
+import NewCrewScreen from '../screens/NewCrewScreen';
+import NewInvoiceScreen from '../screens/NewInvoiceScreen';
+import NewEventScreen from '../screens/NewEventScreen';
+import NotificationsScreen from '../screens/NotificationsScreen';
 import type {
   RootStackParamList,
   TabsParamList,
@@ -79,6 +93,11 @@ function JobsStackNav() {
   return (
     <JobsStack.Navigator screenOptions={stackScreenOptions}>
       <JobsStack.Screen name="Jobs" component={JobsScreen} />
+      <JobsStack.Screen
+        name="JobDetail"
+        component={JobDetailScreen}
+        options={{ header: () => <JobDetailHeader /> }}
+      />
     </JobsStack.Navigator>
   );
 }
@@ -125,6 +144,11 @@ function SettingsStackNav() {
     <SettingsStack.Navigator screenOptions={stackScreenOptions}>
       <SettingsStack.Screen name="Settings" component={SettingsScreen} />
       <SettingsStack.Screen name="Connectors" component={ConnectorsScreen} />
+      <SettingsStack.Screen name="Profile" component={ProfileScreen} />
+      <SettingsStack.Screen name="Agents" component={AgentsScreen} />
+      <SettingsStack.Screen name="Channels" component={ChannelsScreen} />
+      <SettingsStack.Screen name="Billing" component={BillingScreen} />
+      <SettingsStack.Screen name="Team" component={TeamScreen} />
       <SettingsStack.Screen name="SettingsDetail" component={SettingsDetailScreen} />
     </SettingsStack.Navigator>
   );
@@ -136,7 +160,11 @@ function TabsNav() {
   // see docs/TECH_DEBT.md.
   const { jobs } = useJobs();
   const { data: finances } = useFinances();
-  const { totalUnread } = useThreadList();
+  const { totalUnread, refetch: refetchThreads } = useThreadList();
+
+  // Foreground poll so the Threads tab badge picks up inbound texts
+  // without the user having to refocus the tab. Mirrors the bell.
+  usePolling(refetchThreads, 60_000);
 
   const jobsActive = jobs.filter((j) => j.status === 'in_progress').length;
   const overdueCount = finances?.health_summary?.overdue_count ?? 0;
@@ -201,24 +229,40 @@ export default function AppNavigator() {
     );
   }
 
-  // AuthGuard: both a verified token AND a loaded profile required for tabs.
-  // AuthContext rolls back the token if /me fails on bootstrap, so this is
-  // a belt-and-suspenders check.
   if (!token || !currentUser) {
     return (
-      <NavigationContainer>
+      <NavigationContainer ref={navigationRef}>
         <LoginScreen />
       </NavigationContainer>
     );
   }
 
   return (
-    <NavigationContainer>
-      <RootStack.Navigator screenOptions={{ headerShown: false }}>
-        <RootStack.Screen name="Tabs" component={TabsNav} />
-        <RootStack.Screen name="PeopleStack" component={PeopleStackNav} />
-        <RootStack.Screen name="SettingsStack" component={SettingsStackNav} />
-      </RootStack.Navigator>
+    <NavigationContainer ref={navigationRef}>
+      <CreateMenuProvider>
+        <RootStack.Navigator screenOptions={{ headerShown: false }}>
+          <RootStack.Screen name="Tabs" component={TabsNav} />
+          <RootStack.Screen name="PeopleStack" component={PeopleStackNav} />
+          <RootStack.Screen name="SettingsStack" component={SettingsStackNav} />
+          <RootStack.Group
+            screenOptions={{ presentation: 'modal', headerShown: false }}
+          >
+            <RootStack.Screen
+              name="AIChat"
+              component={AIChatScreen}
+              options={{ header: () => <AIChatHeader /> }}
+            />
+            <RootStack.Screen name="NewJob" component={NewJobScreen} />
+            <RootStack.Screen name="NewCrew" component={NewCrewScreen} />
+            <RootStack.Screen name="NewInvoice" component={NewInvoiceScreen} />
+            <RootStack.Screen name="NewEvent" component={NewEventScreen} />
+            <RootStack.Screen
+              name="Notifications"
+              component={NotificationsScreen}
+            />
+          </RootStack.Group>
+        </RootStack.Navigator>
+      </CreateMenuProvider>
     </NavigationContainer>
   );
 }

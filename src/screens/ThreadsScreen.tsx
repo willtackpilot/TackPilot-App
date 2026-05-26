@@ -1,13 +1,14 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  RefreshControl,
   StyleSheet,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { C } from '../constants/theme';
 import EmptyState from '../components/EmptyState';
@@ -15,6 +16,7 @@ import { useThreadList } from '../hooks/useThreadList';
 import { initialsOf, relTime } from '../utils/time';
 import { avatarColors } from '../utils/avatar';
 import FAB from '../components/FAB';
+import { navigationRef } from '../context/CreateMenuContext';
 import type { Subcontractor } from '../api/types';
 import type { ThreadsStackParamList } from '../navigation/types';
 
@@ -25,7 +27,13 @@ function subSubtitle(s: Subcontractor): string {
 
 export default function ThreadsScreen() {
   const nav = useNavigation<NativeStackNavigationProp<ThreadsStackParamList>>();
-  const { threads, loading } = useThreadList();
+  const { threads, loading, refetch } = useThreadList();
+
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch]),
+  );
 
   return (
     <View style={styles.root}>
@@ -33,6 +41,9 @@ export default function ThreadsScreen() {
       style={styles.scroll}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={loading} onRefresh={refetch} tintColor={C.muted} />
+      }
     >
       <View style={styles.header}>
         <Text style={styles.h1}>Threads</Text>
@@ -62,7 +73,10 @@ export default function ThreadsScreen() {
         )}
       </View>
     </ScrollView>
-    <FAB />
+    <FAB
+      onPress={() => navigationRef.navigate('NewCrew' as never)}
+      accessibilityLabel="Add crew"
+    />
     </View>
   );
 }

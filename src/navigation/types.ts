@@ -4,6 +4,7 @@ export type TodayStackParamList = {
 
 export type JobsStackParamList = {
   Jobs: undefined;
+  JobDetail: { jobId: string; title: string };
 };
 
 export type CalendarStackParamList = {
@@ -26,6 +27,11 @@ export type PeopleStackParamList = {
 export type SettingsStackParamList = {
   Settings: undefined;
   Connectors: undefined;
+  Profile: undefined;
+  Agents: undefined;
+  Channels: undefined;
+  Billing: undefined;
+  Team: undefined;
   SettingsDetail: { id: string; label: string };
 };
 
@@ -41,4 +47,10 @@ export type RootStackParamList = {
   Tabs: undefined;
   PeopleStack: undefined;
   SettingsStack: undefined;
+  Notifications: undefined;
+  AIChat: undefined;
+  NewJob: undefined;
+  NewCrew: undefined;
+  NewInvoice: undefined;
+  NewEvent: undefined;
 };

@@ -3,32 +3,30 @@ import { TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { C } from '../constants/theme';
+import { useCreateMenu } from '../context/CreateMenuContext';
 
 type Props = {
   onPress?: () => void;
+  icon?: keyof typeof Ionicons.glyphMap;
   accessibilityLabel?: string;
 };
 
-/**
- * Floating action button. 56 px C.ink circle, bottom-right, sits
- * 16 px above the safe-area inset so it clears the home indicator
- * on devices with one. Tap is a no-op placeholder for now; each
- * screen can pass an onPress when there's a real action.
- */
 export default function FAB({
   onPress,
-  accessibilityLabel = 'New',
+  icon = 'add',
+  accessibilityLabel = 'Create',
 }: Props) {
   const insets = useSafeAreaInsets();
+  const { open } = useCreateMenu();
   return (
     <TouchableOpacity
-      onPress={onPress ?? (() => console.log('FAB tap'))}
+      onPress={onPress ?? (() => open())}
       activeOpacity={0.85}
       style={[styles.fab, { bottom: insets.bottom + 16 }]}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
     >
-      <Ionicons name="add" size={28} color="#FFFFFF" />
+      <Ionicons name={icon} size={28} color="#FFFFFF" />
     </TouchableOpacity>
   );
 }

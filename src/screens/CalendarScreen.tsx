@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -6,13 +6,17 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { NavigationProp } from '@react-navigation/native';
 import { C } from '../constants/theme';
 import FAB from '../components/FAB';
 import { useCalendar } from '../hooks/useCalendar';
 import { formatTime, isSameDay } from '../utils/time';
 import type { CalendarEvent } from '../api/types';
+import type { RootStackParamList } from '../navigation/types';
 
 const DAY_NAMES = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
@@ -39,7 +43,14 @@ function eventSubtitle(e: CalendarEvent): string {
 
 export default function CalendarScreen() {
   const [day, setDay] = useState(() => new Date());
-  const { events, loading } = useCalendar();
+  const { events, loading, refetch } = useCalendar();
+  const nav = useNavigation<NavigationProp<RootStackParamList>>();
+
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch]),
+  );
 
   const dayEvents = useMemo(() => {
     return events
@@ -67,6 +78,9 @@ export default function CalendarScreen() {
       style={styles.scroll}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={loading} onRefresh={refetch} tintColor={C.muted} />
+      }
     >
       <View style={styles.header}>
         <Text style={styles.h1}>Calendar</Text>
@@ -123,7 +137,7 @@ export default function CalendarScreen() {
         )}
       </View>
     </ScrollView>
-    <FAB />
+    <FAB onPress={() => nav.navigate('NewEvent')} accessibilityLabel="New event" />
     </View>
   );
 }

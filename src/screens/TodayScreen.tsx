@@ -1,12 +1,21 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useCallback, useMemo, useState } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  RefreshControl,
+  StyleSheet,
+} from 'react-native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NavigationProp } from '@react-navigation/native';
 import { C, money } from '../constants/theme';
 import SectionHeader from '../components/SectionHeader';
 import EmptyState from '../components/EmptyState';
 import { useDashboard } from '../hooks/useDashboard';
 import { useThreadList } from '../hooks/useThreadList';
+import { useAuth } from '../context/AuthContext';
+import { apiPost } from '../api/client';
 import { initialsOf, relTime } from '../utils/time';
 import { avatarColors } from '../utils/avatar';
 import FAB from '../components/FAB';
@@ -92,9 +101,22 @@ function upcomingRow(item: UpcomingTaskItem): Row {
 export default function TodayScreen() {
   const nav = useNavigation<NavigationProp<TabsParamList>>();
   const tabs = nav.getParent<NavigationProp<TabsParamList>>();
-  const { data } = useDashboard();
-  const { threads } = useThreadList();
+  const { data, loading, refetch } = useDashboard();
+  const { threads, refetch: refetchThreads } = useThreadList();
+  const { currentUser } = useAuth();
   const [needsResolved, setNeedsResolved] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+      refetchThreads();
+    }, [refetch, refetchThreads]),
+  );
+
+  const onRefresh = useCallback(() => {
+    refetch();
+    refetchThreads();
+  }, [refetch, refetchThreads]);
 
   const { greeting, dateStr } = useMemo(() => {
     const now = new Date();
@@ -108,7 +130,7 @@ export default function TodayScreen() {
     return { greeting: g, dateStr: d };
   }, []);
 
-  const firstName = 'Will';
+  const firstName = currentUser?.first_name?.trim() || 'there';
 
   const scheduleTasks = data?.todays_schedule?.tasks ?? [];
   const scheduleCount = data?.todays_schedule?.total_count ?? scheduleTasks.length;
@@ -125,6 +147,9 @@ export default function TodayScreen() {
       style={styles.scroll}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={loading} onRefresh={onRefresh} tintColor={C.muted} />
+      }
     >
       <View style={styles.heading}>
         <View style={styles.dateRow}>

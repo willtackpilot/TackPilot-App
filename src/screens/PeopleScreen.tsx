@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -6,13 +6,17 @@ import {
   ScrollView,
   StyleSheet,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { NavigationProp } from '@react-navigation/native';
 import { C } from '../constants/theme';
 import EmptyState from '../components/EmptyState';
 import FAB from '../components/FAB';
 import { useCrew } from '../hooks/useCrew';
 import { avatarColors } from '../utils/avatar';
 import type { Subcontractor } from '../api/types';
+import type { RootStackParamList } from '../navigation/types';
 
 type Tab = 'crew' | 'customers';
 
@@ -33,6 +37,13 @@ function formatPhone(raw: string): string {
 export default function PeopleScreen() {
   const [tab, setTab] = useState<Tab>('crew');
   const { crew, totalCount, loading, error, refetch } = useCrew();
+  const nav = useNavigation<NavigationProp<RootStackParamList>>();
+
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch]),
+  );
 
   const crewSubtitle =
     totalCount === 1 ? '1 on your team' : `${totalCount} on your team`;
@@ -43,6 +54,9 @@ export default function PeopleScreen() {
       style={styles.scroll}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={loading} onRefresh={refetch} tintColor={C.muted} />
+      }
     >
       <View style={styles.header}>
         <Text style={styles.h1}>People</Text>
@@ -83,7 +97,7 @@ export default function PeopleScreen() {
         )}
       </View>
     </ScrollView>
-    <FAB />
+    <FAB onPress={() => nav.navigate('NewCrew')} accessibilityLabel="Add crew" />
     </View>
   );
 }
